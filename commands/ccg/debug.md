@@ -24,28 +24,21 @@ description: UltraThink 多模型调试（Codex 后端诊断 + Gemini 前端诊�
 
 **同时启动两个后台任务（`run_in_background: true`）**：
 
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 #### Codex 后端诊断
 ```bash
 codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
-You are debugging: <问题描述>
+<ROLE>
+{{读取 prompts/codex/debugger.md 的内容}}
+</ROLE>
+
+<TASK>
+Debug: <问题描述>
 
 Context:
 <相关代码>
-
-## Diagnostic Task
-1. Identify 3-5 potential root causes focusing on:
-   - Backend logic errors
-   - Database queries / data integrity
-   - API request/response handling
-   - Race conditions / concurrency issues
-   - Authentication / authorization problems
-
-2. For each hypothesis, provide:
-   - Likelihood (High/Medium/Low)
-   - Evidence from the code
-   - Diagnostic steps to validate
-
-3. Recommend specific logs or breakpoints to add
+</TASK>
 
 OUTPUT: Structured diagnostic report. No code modifications.
 EOF
@@ -54,25 +47,16 @@ EOF
 #### Gemini 前端诊断
 ```bash
 codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
-You are debugging: <问题描述>
+<ROLE>
+{{读取 prompts/gemini/debugger.md 的内容}}
+</ROLE>
+
+<TASK>
+Debug: <问题描述>
 
 Context:
 <相关代码>
-
-## Diagnostic Task
-1. Identify 3-5 potential root causes focusing on:
-   - Component rendering issues
-   - State management problems
-   - Event handling errors
-   - CSS/layout bugs
-   - Browser compatibility issues
-
-2. For each hypothesis, provide:
-   - Likelihood (High/Medium/Low)
-   - Evidence from the code
-   - Diagnostic steps to validate
-
-3. Recommend specific console.log or React DevTools checks
+</TASK>
 
 OUTPUT: Structured diagnostic report. No code modifications.
 EOF

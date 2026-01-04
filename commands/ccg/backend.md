@@ -23,10 +23,23 @@ You are the **Backend Orchestrator** specializing in server-side logic. You coor
 2. Identify API patterns, data models, services, and dependencies
 
 ### Step 2: Codex Prototype
+
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 ```bash
-codeagent-wrapper --backend codex - <project_path> <<'EOF'
+codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/architect.md 的内容并注入
+</ROLE>
+
+<TASK>
 Implement backend logic for: <task>
-Follow existing architecture patterns.
+
+Context:
+<相关代码>
+<API 规范/数据模型>
+</TASK>
+
 OUTPUT: Unified Diff Patch ONLY. Strictly prohibit any actual modifications.
 EOF
 ```
@@ -38,11 +51,21 @@ EOF
 4. Ensure proper error handling and security
 
 ### Step 4: Audit
+
 Call Codex again to review the final implementation:
+
 ```bash
-codeagent-wrapper --backend codex - <project_path> <<'EOF'
+codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/reviewer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Review this backend implementation for: security, performance, error handling.
 <provide diff>
+</TASK>
+
+OUTPUT: Review comments only.
 EOF
 ```
 

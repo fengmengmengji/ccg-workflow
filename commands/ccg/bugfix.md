@@ -24,19 +24,27 @@ description: 质量门控修复（双模型交叉验证，90%+ 通过）
 
 **并行启动（`run_in_background: true`）**：
 
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 #### Codex 分析
 ```bash
 codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
-Analyze bug: <bug描述>
+<ROLE>
+读取 prompts/codex/architect.md 的内容并注入
+</ROLE>
+
+<TASK>
+Bugfix: <bug描述>
 
 Context:
 <相关代码>
 
-## Analysis Requirements
+Requirements:
 1. Identify root cause with evidence
 2. Propose fix with minimal code changes
 3. Assess potential side effects
 4. Recommend regression tests
+</TASK>
 
 OUTPUT: Unified Diff Patch for the fix.
 EOF
@@ -45,16 +53,22 @@ EOF
 #### Gemini 分析
 ```bash
 codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
-Analyze bug: <bug描述>
+<ROLE>
+读取 prompts/gemini/frontend.md 的内容并注入
+</ROLE>
+
+<TASK>
+Bugfix: <bug描述>
 
 Context:
 <相关代码>
 
-## Analysis Requirements
+Requirements:
 1. Identify root cause with evidence
 2. Propose fix with minimal code changes
 3. Check UI/UX impact
 4. Recommend user-facing tests
+</TASK>
 
 OUTPUT: Unified Diff Patch for the fix.
 EOF
@@ -78,9 +92,16 @@ EOF
 
 **并行启动双模型验证（`run_in_background: true`）**：
 
+**注意**：调用前先读取对应角色提示词文件（reviewer），将内容注入到 `<ROLE>` 标签中。
+
 #### Codex 验证
 ```bash
 codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/reviewer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Validate bugfix for: <bug描述>
 
 Original bug:
@@ -88,38 +109,20 @@ Original bug:
 
 Applied fix:
 <修复的 diff>
+</TASK>
 
-## Validation Checklist (Score each 0-20 points)
-1. **Root Cause Resolution** (0-20): Does the fix address the actual root cause?
-2. **Code Quality** (0-20): Is the fix clean, maintainable, and follows best practices?
-3. **Side Effects** (0-20): Are there any unintended side effects or regressions?
-4. **Edge Cases** (0-20): Does the fix handle edge cases properly?
-5. **Test Coverage** (0-20): Is the fix adequately testable?
-
-OUTPUT FORMAT:
-```
-VALIDATION REPORT
-=================
-Root Cause Resolution: XX/20 - <reason>
-Code Quality: XX/20 - <reason>
-Side Effects: XX/20 - <reason>
-Edge Cases: XX/20 - <reason>
-Test Coverage: XX/20 - <reason>
-
-TOTAL SCORE: XX/100
-
-ISSUES FOUND:
-- <issue 1>
-- <issue 2>
-
-RECOMMENDATION: [PASS/NEEDS_IMPROVEMENT]
-```
+OUTPUT: Use the scoring format defined in the role.
 EOF
 ```
 
 #### Gemini 验证
 ```bash
 codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/reviewer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Validate bugfix for: <bug描述>
 
 Original bug:
@@ -127,32 +130,9 @@ Original bug:
 
 Applied fix:
 <修复的 diff>
+</TASK>
 
-## Validation Checklist (Score each 0-20 points)
-1. **User Experience** (0-20): Does the fix improve/maintain UX?
-2. **Visual Consistency** (0-20): Is the UI consistent after the fix?
-3. **Accessibility** (0-20): Does the fix maintain a11y standards?
-4. **Performance** (0-20): Any performance implications?
-5. **Browser Compatibility** (0-20): Works across browsers?
-
-OUTPUT FORMAT:
-```
-VALIDATION REPORT
-=================
-User Experience: XX/20 - <reason>
-Visual Consistency: XX/20 - <reason>
-Accessibility: XX/20 - <reason>
-Performance: XX/20 - <reason>
-Browser Compatibility: XX/20 - <reason>
-
-TOTAL SCORE: XX/100
-
-ISSUES FOUND:
-- <issue 1>
-- <issue 2>
-
-RECOMMENDATION: [PASS/NEEDS_IMPROVEMENT]
-```
+OUTPUT: Use the scoring format defined in the role.
 EOF
 ```
 

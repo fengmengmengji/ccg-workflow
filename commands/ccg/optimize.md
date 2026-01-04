@@ -26,44 +26,21 @@ description: 多模型性能优化（Codex 后端优化 + Gemini 前端优化）
 
 **同时启动（`run_in_background: true`）**：
 
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 #### Codex 后端性能分析
 ```bash
 codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/optimizer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Performance optimization for: <优化目标>
 
 Context:
 <相关代码>
-
-## Analysis Areas
-
-### 1. Database Performance
-- Query efficiency (N+1 problems, missing indexes)
-- Connection pooling
-- Caching opportunities
-- Query optimization
-
-### 2. Algorithm Efficiency
-- Time complexity analysis
-- Space complexity analysis
-- Unnecessary computations
-- Loop optimizations
-
-### 3. Resource Management
-- Memory leaks
-- Connection handling
-- File I/O patterns
-- Async processing opportunities
-
-### 4. Caching Strategy
-- Application-level caching
-- Redis/Memcached opportunities
-- Cache invalidation patterns
-- CDN utilization
-
-## Output Requirements
-1. Identify TOP 3 performance bottlenecks
-2. Quantify expected improvement for each fix
-3. Provide implementation as Unified Diff Patch
+</TASK>
 
 OUTPUT: Analysis report + Unified Diff Patch for optimizations.
 EOF
@@ -72,41 +49,16 @@ EOF
 #### Gemini 前端性能分析
 ```bash
 codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/optimizer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Performance optimization for: <优化目标>
 
 Context:
 <相关代码>
-
-## Analysis Areas
-
-### 1. Render Performance
-- Unnecessary re-renders
-- Component memoization opportunities
-- Virtual DOM efficiency
-- List virtualization needs
-
-### 2. Bundle Optimization
-- Code splitting opportunities
-- Tree shaking effectiveness
-- Dynamic imports
-- Dependency size analysis
-
-### 3. Loading Performance
-- Lazy loading components
-- Image optimization
-- Font loading strategy
-- Critical CSS extraction
-
-### 4. Runtime Performance
-- Event handler optimization
-- Debounce/throttle needs
-- Web Worker opportunities
-- Animation performance
-
-## Output Requirements
-1. Identify TOP 3 performance bottlenecks
-2. Quantify expected improvement for each fix
-3. Provide implementation as Unified Diff Patch
+</TASK>
 
 OUTPUT: Analysis report + Unified Diff Patch for optimizations.
 EOF

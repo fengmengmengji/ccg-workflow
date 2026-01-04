@@ -27,21 +27,22 @@ description: 多模型代码生成（智能路由：前端→Gemini，后端→C
 
 ### Phase 2: 智能路由
 
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 #### Route A: 前端任务 → Gemini
 ```bash
 codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/frontend.md 的内容并注入
+</ROLE>
+
+<TASK>
 Implement: <功能描述>
 
 Context:
 <相关代码>
 <设计系统/组件库信息>
-
-## Implementation Requirements
-1. Follow existing component patterns
-2. Use TypeScript with proper types
-3. Ensure responsive design (mobile-first)
-4. Include accessibility attributes
-5. Handle loading/error states
+</TASK>
 
 OUTPUT: Unified Diff Patch ONLY.
 EOF
@@ -50,18 +51,17 @@ EOF
 #### Route B: 后端任务 → Codex
 ```bash
 codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/architect.md 的内容并注入
+</ROLE>
+
+<TASK>
 Implement: <功能描述>
 
 Context:
 <相关代码>
 <API 规范/数据模型>
-
-## Implementation Requirements
-1. Follow existing architecture patterns
-2. Include proper error handling
-3. Add input validation
-4. Consider security (auth, sanitization)
-5. Optimize database queries
+</TASK>
 
 OUTPUT: Unified Diff Patch ONLY.
 EOF
@@ -71,8 +71,8 @@ EOF
 
 **同时启动（`run_in_background: true`）**：
 
-1. **Codex**: 生成后端 API + 数据层
-2. **Gemini**: 生成前端组件 + UI 交互
+1. **Codex**: 使用 `prompts/codex/architect.md` 角色，生成后端 API + 数据层
+2. **Gemini**: 使用 `prompts/gemini/frontend.md` 角色，生成前端组件 + UI 交互
 
 定义清晰的接口契约：
 ```
@@ -102,19 +102,21 @@ API Contract:
 
 **并行启动审查（`run_in_background: true`）**：
 
+**注意**：调用前先读取对应角色提示词文件（reviewer），将内容注入到 `<ROLE>` 标签中。
+
 ```bash
 # Codex 审查
 codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/reviewer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Review the implementation for: <功能描述>
 
 Changes:
 <实施的代码变更>
-
-Review focus:
-- Security vulnerabilities
-- Performance issues
-- Error handling
-- Code quality
+</TASK>
 
 OUTPUT: Review comments with specific line references.
 EOF
@@ -123,16 +125,16 @@ EOF
 ```bash
 # Gemini 审查
 codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/reviewer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Review the implementation for: <功能描述>
 
 Changes:
 <实施的代码变更>
-
-Review focus:
-- UI/UX consistency
-- Accessibility compliance
-- Responsive design
-- Component reusability
+</TASK>
 
 OUTPUT: Review comments with specific line references.
 EOF

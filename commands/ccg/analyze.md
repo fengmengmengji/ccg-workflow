@@ -27,31 +27,43 @@ You are the **Analysis Coordinator** orchestrating multi-model research. You dir
 
 **并行调用 Codex 和 Gemini**（使用 `run_in_background: true` 非阻塞执行）：
 
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 在单个消息中同时发送两个 Bash 工具调用：
 
-```
-Bash(run_in_background=true): codeagent-wrapper --backend codex - <project_path> <<'EOF'
+```bash
+# Codex 分析
+codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/analyzer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Analyze: <question>
 
-Focus on:
-- Architecture implications
-- Logic flow
-- Performance considerations
-- Technical trade-offs
+Context:
+<相关代码和架构信息>
+</TASK>
 
-Provide detailed analysis with recommendations.
+OUTPUT: Detailed analysis with recommendations.
 EOF
+```
 
-Bash(run_in_background=true): codeagent-wrapper --backend gemini - <project_path> <<'EOF'
+```bash
+# Gemini 分析
+codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/analyzer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Analyze: <question>
 
-Focus on:
-- User experience implications
-- Design considerations
-- Accessibility impact
-- Visual patterns
+Context:
+<相关代码和设计信息>
+</TASK>
 
-Provide detailed analysis with recommendations.
+OUTPUT: Detailed analysis with recommendations.
 EOF
 ```
 

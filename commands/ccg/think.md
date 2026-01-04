@@ -24,35 +24,21 @@ description: UltraThink 深度分析（双模型并行分析 + 综合见解）
 
 **同时启动（`run_in_background: true`）**：
 
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 #### Codex 分析（后端/系统视角）
 ```bash
 codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/analyzer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Deep analysis of: <分析主题>
 
 Context:
 <相关代码和架构信息>
-
-## Analysis Framework
-
-### 1. Problem Decomposition
-- Break down the problem into sub-components
-- Identify dependencies and relationships
-- Map data flows and system boundaries
-
-### 2. Technical Assessment
-- Evaluate current implementation
-- Identify technical debt and risks
-- Assess scalability and performance implications
-
-### 3. Solution Exploration
-- Propose 2-3 alternative approaches
-- Analyze trade-offs for each approach
-- Consider long-term maintainability
-
-### 4. Recommendations
-- Rank solutions by feasibility and impact
-- Identify quick wins vs strategic changes
-- Highlight risks and mitigation strategies
+</TASK>
 
 OUTPUT: Structured analysis report with clear reasoning.
 EOF
@@ -61,32 +47,16 @@ EOF
 #### Gemini 分析（前端/用户视角）
 ```bash
 codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/analyzer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Deep analysis of: <分析主题>
 
 Context:
 <相关代码和设计信息>
-
-## Analysis Framework
-
-### 1. User Impact Assessment
-- How does this affect user experience?
-- What are the user-facing implications?
-- Identify accessibility considerations
-
-### 2. Design System Evaluation
-- Consistency with existing patterns
-- Component reusability opportunities
-- Visual and interaction design implications
-
-### 3. Implementation Considerations
-- Frontend architecture impact
-- State management implications
-- Performance and bundle size concerns
-
-### 4. Recommendations
-- UX-driven solution proposals
-- Design system alignment suggestions
-- Progressive enhancement strategies
+</TASK>
 
 OUTPUT: Structured analysis report with clear reasoning.
 EOF

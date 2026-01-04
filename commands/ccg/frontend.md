@@ -23,10 +23,23 @@ You are the **Frontend Orchestrator** specializing in UI/UX implementation. You 
 2. Identify the design system, component library, and styling conventions in use
 
 ### Step 2: Gemini Prototype
+
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 ```bash
-codeagent-wrapper --backend gemini - <project_path> <<'EOF'
+codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/frontend.md 的内容并注入
+</ROLE>
+
+<TASK>
 Generate frontend prototype for: <task>
-Follow existing design patterns.
+
+Context:
+<相关代码>
+<设计系统/组件库信息>
+</TASK>
+
 OUTPUT: Unified Diff Patch ONLY. Strictly prohibit any actual modifications.
 EOF
 ```
@@ -38,11 +51,21 @@ EOF
 4. Ensure consistency with existing components
 
 ### Step 4: Audit
+
 Call Gemini again to review the final implementation:
+
 ```bash
-codeagent-wrapper --backend gemini - <project_path> <<'EOF'
+codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/reviewer.md 的内容并注入
+</ROLE>
+
+<TASK>
 Review this UI implementation for: accessibility, responsiveness, design consistency.
 <provide diff>
+</TASK>
+
+OUTPUT: Review comments only.
 EOF
 ```
 

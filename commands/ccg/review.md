@@ -40,36 +40,38 @@ Then call `mcp__auggie-mcp__codebase-retrieval` to get related context.
 
 **并行调用 Codex 和 Gemini**（使用 `run_in_background: true` 非阻塞执行）：
 
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 在单个消息中同时发送两个 Bash 工具调用：
 
-```
-Bash(run_in_background=true): codeagent-wrapper --backend codex - <project_path> <<'EOF'
-Perform code review focusing on:
-1. Security vulnerabilities
-2. Performance issues
-3. Logic errors
-4. Error handling
-5. Best practices
+```bash
+# Codex 审查
+codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/reviewer.md 的内容并注入
+</ROLE>
 
+<TASK>
 Code changes to review:
 <git_diff_or_specified_code>
+</TASK>
 
-Provide specific line-by-line feedback.
 OUTPUT: Review comments only. No code modifications.
 EOF
+```
 
-Bash(run_in_background=true): codeagent-wrapper --backend gemini - <project_path> <<'EOF'
-Perform code review focusing on:
-1. UI/UX consistency
-2. Accessibility (a11y)
-3. Responsive design
-4. Component architecture
-5. Style best practices
+```bash
+# Gemini 审查
+codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/reviewer.md 的内容并注入
+</ROLE>
 
+<TASK>
 Code changes to review:
 <git_diff_or_specified_code>
+</TASK>
 
-Provide specific feedback.
 OUTPUT: Review comments only. No code modifications.
 EOF
 ```

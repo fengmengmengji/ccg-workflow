@@ -47,17 +47,43 @@ description: 完整6阶段多模型协作工作流（Prompt增强 → 上下文�
 
 **并行调用 Codex 和 Gemini 进行分析**（使用 `run_in_background: true` 非阻塞执行）：
 
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 在单个消息中同时发送两个 Bash 工具调用：
 
-```
-Bash(run_in_background=true): codeagent-wrapper --backend codex - <项目路径> <<'EOF'
-分析此需求: <需求>
-提供后端/逻辑方面的实现方案。
-EOF
+```bash
+# Codex 分析
+codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/analyzer.md 的内容并注入
+</ROLE>
 
-Bash(run_in_background=true): codeagent-wrapper --backend gemini - <项目路径> <<'EOF'
+<TASK>
 分析此需求: <需求>
-提供前端/UI方面的实现方案。
+
+Context:
+<相关代码和架构信息>
+</TASK>
+
+OUTPUT: 提供后端/逻辑方面的实现方案。
+EOF
+```
+
+```bash
+# Gemini 分析
+codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/analyzer.md 的内容并注入
+</ROLE>
+
+<TASK>
+分析此需求: <需求>
+
+Context:
+<相关代码和设计信息>
+</TASK>
+
+OUTPUT: 提供前端/UI方面的实现方案。
 EOF
 ```
 
@@ -69,20 +95,42 @@ EOF
 
 根据任务类型选择路由：
 
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 **路由 A (前端/UI)** → 使用 Gemini:
 ```bash
-codeagent-wrapper --backend gemini - <项目路径> <<'EOF'
+codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/frontend.md 的内容并注入
+</ROLE>
+
+<TASK>
 生成前端原型: <任务>
-遵循现有设计模式。
+
+Context:
+<相关代码>
+<设计系统/组件库信息>
+</TASK>
+
 OUTPUT: Unified Diff Patch ONLY. Strictly prohibit any actual modifications.
 EOF
 ```
 
 **路由 B (后端/逻辑)** → 使用 Codex:
 ```bash
-codeagent-wrapper --backend codex - <项目路径> <<'EOF'
+codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/architect.md 的内容并注入
+</ROLE>
+
+<TASK>
 实现后端逻辑: <任务>
-遵循现有架构模式。
+
+Context:
+<相关代码>
+<API 规范/数据模型>
+</TASK>
+
 OUTPUT: Unified Diff Patch ONLY. Strictly prohibit any actual modifications.
 EOF
 ```
@@ -98,15 +146,37 @@ EOF
 
 **并行调用 Codex 和 Gemini 进行代码审查**（使用 `run_in_background: true`）：
 
-```
-Bash(run_in_background=true): codeagent-wrapper --backend codex - <项目路径> <<'EOF'
+**注意**：调用前先读取对应角色提示词文件（reviewer），将内容注入到 `<ROLE>` 标签中。
+
+```bash
+# Codex 审查
+codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/reviewer.md 的内容并注入
+</ROLE>
+
+<TASK>
 审查此实现: 安全性、性能、错误处理。
 <提供 diff>
-EOF
+</TASK>
 
-Bash(run_in_background=true): codeagent-wrapper --backend gemini - <项目路径> <<'EOF'
+OUTPUT: Review comments only.
+EOF
+```
+
+```bash
+# Gemini 审查
+codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/reviewer.md 的内容并注入
+</ROLE>
+
+<TASK>
 审查此实现: 可访问性、响应式设计、设计一致性。
 <提供 diff>
+</TASK>
+
+OUTPUT: Review comments only.
 EOF
 ```
 

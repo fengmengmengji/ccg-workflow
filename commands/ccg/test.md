@@ -27,36 +27,22 @@ description: 多模型测试生成（Codex 后端测试 + Gemini 前端测试）
 
 根据代码类型选择路由：
 
+**注意**：调用前先读取对应角色提示词文件，将内容注入到 `<ROLE>` 标签中。
+
 #### Route A: 后端代码 → Codex
 ```bash
 codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/codex/tester.md 的内容并注入
+</ROLE>
+
+<TASK>
 Generate tests for: <测试目标>
 
 Context:
 <目标代码>
 <现有测试样例>
-
-## Test Generation Requirements
-1. **Unit Tests**: Test individual functions/methods in isolation
-   - Mock external dependencies
-   - Cover happy path and edge cases
-   - Test error handling
-
-2. **Integration Tests**: Test component interactions
-   - Database operations
-   - API endpoint behavior
-   - Service layer integration
-
-3. **Test Structure**:
-   - Use existing test framework patterns
-   - Follow AAA pattern (Arrange-Act-Assert)
-   - Include descriptive test names
-
-4. **Coverage Focus**:
-   - Input validation
-   - Error scenarios
-   - Boundary conditions
-   - Null/undefined handling
+</TASK>
 
 OUTPUT: Unified Diff Patch for test files ONLY.
 EOF
@@ -65,35 +51,17 @@ EOF
 #### Route B: 前端代码 → Gemini
 ```bash
 codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF'
+<ROLE>
+读取 prompts/gemini/tester.md 的内容并注入
+</ROLE>
+
+<TASK>
 Generate tests for: <测试目标>
 
 Context:
 <目标代码>
 <现有测试样例>
-
-## Test Generation Requirements
-1. **Component Tests**: Test React/Vue components
-   - Render tests
-   - Props validation
-   - Event handling
-   - State changes
-
-2. **User Interaction Tests**:
-   - Click events
-   - Form submissions
-   - Keyboard navigation
-   - Accessibility (a11y) checks
-
-3. **Test Structure**:
-   - Use React Testing Library / Vue Test Utils patterns
-   - Test user behavior, not implementation
-   - Include snapshot tests where appropriate
-
-4. **Coverage Focus**:
-   - Loading states
-   - Error states
-   - Responsive behavior
-   - Edge cases in UI logic
+</TASK>
 
 OUTPUT: Unified Diff Patch for test files ONLY.
 EOF
