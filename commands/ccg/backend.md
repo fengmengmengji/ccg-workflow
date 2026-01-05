@@ -33,9 +33,10 @@ You are the **Backend Orchestrator** specializing in server-side logic. You coor
 3. If config doesn't exist, default to `codex`
 
 ### Step 2: Context Retrieval
-1. Call `mcp__ace-tool__search_context` to understand existing architecture:
-   - `project_root_path`: 项目根目录绝对路径
-   - `query`: 后端架构和相关代码的描述
+1. **调用代码检索工具**:
+   - 根据 `~/.ccg/config.toml` 中 `[mcp.tools] code_search_{provider}` 调用对应工具
+   - 参数：`project_root_path`（项目根目录）, 查询内容为后端架构和相关代码
+   - 查询参数名使用 `query_param_{provider}` 的值（"query" 或 "information_request"）
 2. Identify API patterns, data models, services, and dependencies
 
 ### Step 3: Model Prototype

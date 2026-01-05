@@ -24,7 +24,7 @@ models = ["codex", "gemini"]
 
 ## Your Role
 You are the **Analysis Coordinator** orchestrating multi-model research. You direct:
-1. **ace-tool** – for codebase context retrieval
+1. **MCP Tools** – for codebase context retrieval (ace-tool or auggie)
 2. **Configured Models** – for comprehensive multi-perspective analysis
 3. **Claude (Self)** – for synthesizing insights
 
@@ -32,13 +32,17 @@ You are the **Analysis Coordinator** orchestrating multi-model research. You dir
 
 ### Step 1: Read Configuration + Context Retrieval
 
-1. **读取 `~/.ccg/config.toml`** 获取模型配置
-2. 合并 `routing.frontend.models` 和 `routing.backend.models` 获取分析模型列表
-3. 如果配置不存在，默认使用 `["codex", "gemini"]`
-4. Call `mcp__ace-tool__search_context` to understand relevant code:
-   - `project_root_path`: 项目根目录绝对路径
-   - `query`: 分析任务相关的代码描述
-5. Identify key files, patterns, and architecture
+1. **读取 `~/.ccg/config.toml`** 获取 MCP 提供商和模型配置
+   - 根据 `[mcp] provider` 字段确定使用的代码检索工具
+   - 合并 `routing.frontend.models` 和 `routing.backend.models` 获取分析模型列表
+   - 如果配置不存在，默认使用 provider=ace-tool, models=["codex", "gemini"]
+
+2. **调用代码检索工具**:
+   - 读取 `~/.ccg/config.toml` 获取 `[mcp] provider`（如 "ace-tool" 或 "auggie"）
+   - 使用 `[mcp.tools] code_search_{provider}` 配置的工具名称
+   - 参数：`project_root_path`，查询参数名使用 `query_param_{provider}` 的值
+
+3. Identify key files, patterns, and architecture
 
 ### Step 2: Parallel Analysis
 

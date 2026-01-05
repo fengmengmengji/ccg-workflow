@@ -14,15 +14,21 @@ description: 多模型代码生成（智能路由：前端→Gemini，后端→C
 
 ## 工作流程
 
+**注意**: 本命令使用 MCP 代码检索工具。请先读取 `~/.ccg/config.toml` 确定 MCP 提供商（ace-tool 或 auggie），然后使用对应的工具。
+
 ### Phase 1: 需求分析
 
-1. 调用 `mcp__ace-tool__search_context` 检索:
-   - `project_root_path`: 项目根目录绝对路径
-   - `query`: 功能需求相关的代码描述
+1. **调用代码检索工具**:
+   - 根据 `~/.ccg/config.toml` 中 `[mcp.tools] code_search_{provider}` 调用对应工具
+   - 参数：`project_root_path`（项目根目录）, 查询内容为功能需求相关的代码
+   - 查询参数名使用 `query_param_{provider}` 的值（"query" 或 "information_request"）
+
+2. 分析检索结果：
    - 相关模块和文件结构
    - 现有代码模式和风格
    - 依赖和接口定义
-2. 分析任务类型：
+
+3. 分析任务类型：
    - **前端**: UI 组件、样式、用户交互
    - **后端**: API、业务逻辑、数据库操作
    - **全栈**: 同时涉及前后端

@@ -14,11 +14,14 @@ description: 多模型性能优化（Codex 后端优化 + Gemini 前端优化）
 
 ## 工作流程
 
+**注意**: 本命令使用 MCP 代码检索工具。请先读取 `~/.ccg/config.toml` 确定 MCP 提供商（ace-tool 或 auggie），然后使用对应的工具。
+
 ### Phase 1: 性能基线分析
 
-1. 调用 `mcp__ace-tool__search_context` 检索目标代码:
-   - `project_root_path`: 项目根目录绝对路径
-   - `query`: 优化目标相关的代码描述
+1. **调用代码检索工具**:
+   - 根据 `~/.ccg/config.toml` 中 `[mcp.tools] code_search_{provider}` 调用对应工具
+   - 参数：`project_root_path`（项目根目录）, 查询参数使用配置中 `query_param_{provider}` 对应的名称
+   - 查询参数名使用 `query_param_{provider}` 的值（"query" 或 "information_request"）
 2. 识别性能关键路径
 3. 收集现有指标（如有）：
    - 后端: 响应时间、查询耗时、内存占用

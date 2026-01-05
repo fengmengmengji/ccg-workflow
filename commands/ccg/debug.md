@@ -14,11 +14,14 @@ description: UltraThink 多模型调试（Codex 后端诊断 + Gemini 前端诊�
 
 ## 工作流程
 
+**注意**: 本命令使用 MCP 代码检索工具。请先读取 `~/.ccg/config.toml` 确定 MCP 提供商（ace-tool 或 auggie），然后使用对应的工具。
+
 ### Phase 1: 上下文检索
 
-1. 调用 `mcp__ace-tool__search_context` 检索相关代码:
-   - `project_root_path`: 项目根目录绝对路径
-   - `query`: 问题相关的代码描述
+1. **调用代码检索工具**:
+   - 根据 `~/.ccg/config.toml` 中 `[mcp.tools] code_search_{provider}` 调用对应工具
+   - 参数：`project_root_path`（项目根目录）, 查询参数使用配置中 `query_param_{provider}` 对应的名称
+   - 查询参数名使用 `query_param_{provider}` 的值（"query" 或 "information_request"）
 2. 收集错误日志、堆栈信息、复现步骤
 3. 识别问题涉及的模块（前端/后端/全栈）
 

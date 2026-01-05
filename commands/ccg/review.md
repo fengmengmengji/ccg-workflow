@@ -44,9 +44,10 @@ git status --short
 
 **If arguments provided**, use the specified code/description.
 
-Then call `mcp__ace-tool__search_context` to get related context:
-- `project_root_path`: 项目根目录绝对路径
-- `query`: 代码变更相关的上下文描述
+Then **调用代码检索工具**获取相关上下文:
+- 读取 `~/.ccg/config.toml` 获取 `[mcp] provider`
+- 使用 `[mcp.tools] code_search_{provider}` 配置的工具名称
+- 参数：`project_root_path`，查询参数名使用 `query_param_{provider}` 的值
 
 ### Step 2: Parallel Review
 

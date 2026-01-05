@@ -41,19 +41,23 @@ strategy = "parallel"
 ## 流程
 
 ### 阶段 0: 读取配置 + Prompt 增强
-1. **读取 `~/.ccg/config.toml`** 获取模型路由配置
-2. 如果配置不存在，使用默认值：frontend=gemini, backend=codex
-3. 调用 `mcp__ace-tool__enhance_prompt` 优化原始需求:
-   - `project_root_path`: 当前项目根目录绝对路径
-   - `prompt`: 用户原始需求
-   - `conversation_history`: 最近对话历史
-4. ace-tool 会打开 Web UI，用户可选择：发送增强/使用原始/继续增强/结束对话
-5. 根据用户选择继续后续阶段
+1. **读取 `~/.ccg/config.toml`** 获取 MCP 提供商和模型路由配置
+   - 如果配置不存在，使用默认值：provider=ace-tool, frontend=gemini, backend=codex
+   - 根据 `[mcp] provider` 字段确定使用的 MCP 工具
+
+2. **Prompt 增强**:
+   - 读取 `~/.ccg/config.toml` 获取 `[mcp.tools] prompt_enhance_{provider}` 的工具名称
+   - 如果工具名为空字符串（如 auggie 的 `prompt_enhance_auggie = ""`），跳过增强，提示用户查看配置中的 setup_url
+   - 否则调用该工具，参数：`project_root_path`, `prompt`, `conversation_history`
+
+3. 根据用户选择继续后续阶段
 
 ### 阶段 1: 上下文检索
-1. 调用 `mcp__ace-tool__search_context` 获取（增强后的）需求相关代码:
-   - `project_root_path`: 项目根目录绝对路径
-   - `query`: 需求的自然语言描述
+1. **调用代码检索工具**:
+   - 读取 `~/.ccg/config.toml` 获取 `[mcp] provider` 值（如 "ace-tool" 或 "auggie"）
+   - 使用 `[mcp.tools] code_search_{provider}` 配置的工具名称
+   - 参数：`project_root_path`（项目根目录），查询参数名使用 `query_param_{provider}` 的值（"query" 或 "information_request"）
+
 2. 识别所有相关文件、类、函数和依赖
 3. 如需求仍不清晰，提出澄清问题
 

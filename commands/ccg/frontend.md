@@ -33,9 +33,10 @@ You are the **Frontend Orchestrator** specializing in UI/UX implementation. You 
 3. If config doesn't exist, default to `gemini`
 
 ### Step 2: Context Retrieval
-1. Call `mcp__ace-tool__search_context` to find existing UI components, styles, and patterns:
-   - `project_root_path`: 项目根目录绝对路径
-   - `query`: 前端组件和样式相关的描述
+1. **调用代码检索工具**:
+   - 根据 `~/.ccg/config.toml` 中 `[mcp.tools] code_search_{provider}` 调用对应工具
+   - 参数：`project_root_path`（项目根目录）, 查询内容为前端组件和样式
+   - 查询参数名使用 `query_param_{provider}` 的值（"query" 或 "information_request"）
 2. Identify the design system, component library, and styling conventions in use
 
 ### Step 3: Model Prototype

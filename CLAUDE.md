@@ -245,7 +245,59 @@ python3 install.py
 1. ✅ 安装核心工作流指令
 2. ✅ 安装 17 个斜杠命令
 3. ✅ 编译/使用预编译 codeagent-wrapper
-4. ✅ 配置 ace-tool MCP（轻量级代码检索 + Prompt 增强）
+4. ✅ **交互式选择并配置 MCP 工具**（ace-tool 或 auggie）
+5. ✅ 生成配置文件 `~/.ccg/config.toml`
+
+### MCP 工具选择
+
+安装时会提示选择 MCP 代码检索工具：
+
+#### 选项 1: ace-tool（推荐）
+- ✅ **内置 Prompt 增强工具** (`enhance_prompt`)
+- ✅ **代码库上下文检索** (`search_context`)
+- 第三方封装版本，使用更简单
+- 需要注册获取 API Token: https://augmentcode.com/
+
+#### 选项 2: auggie（官方原版）
+- ✅ **代码库上下文检索** (`codebase-retrieval`)
+- ⚠️ **不包含 Prompt 增强工具**
+- Augment 官方 MCP (`@augmentcode/auggie@prerelease`)
+- 📖 配置说明: https://linux.do/t/topic/1280612
+
+#### 选项 0: 跳过安装
+- 稍后可手动配置 MCP
+- 命令仍可正常使用，但无代码检索功能
+
+### 配置文件
+
+安装完成后会在 `~/.ccg/config.toml` 生成配置：
+
+```toml
+[mcp]
+provider = "ace-tool"  # ace-tool | auggie | none
+
+[mcp.ace-tool]
+tools = ["enhance_prompt", "search_context"]
+
+[mcp.auggie]
+tools = ["codebase-retrieval"]
+note = "auggie 不包含 Prompt 增强工具，需手动配置"
+
+[routing]
+mode = "smart"
+# ... 模型路由配置
+```
+
+命令模板会根据 `[mcp] provider` 字段动态选择正确的 MCP 工具。
+
+### MCP 调用规范
+
+所有命令模板统一引用 `memorys/MCP_USAGE.md` 获取 MCP 调用规范，不再在每个命令中重复列举两种 MCP 的调用方式。
+
+**优势**：
+- ✅ **简洁**：命令模板减少 50% 的提示词长度
+- ✅ **统一**：MCP 调用逻辑集中管理，易于维护
+- ✅ **灵活**：添加新 MCP 只需更新配置文件和 `MCP_USAGE.md`
 
 ---
 

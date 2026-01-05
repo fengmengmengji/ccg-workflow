@@ -1,4 +1,4 @@
-# 【开源缝合】CCG v3.0: Claude Code 编排三 CLI 协作
+# 【开源缝合】CCG: Claude Code 编排三 CLI 协作
 
 <div align="center">
 
@@ -8,13 +8,37 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Compatible-green.svg)](https://claude.ai/code)
 
-> **v3.0.0 重大更新**：从 Python 脚本进化为 npm 包，三 CLI 协作时代正式开启！
+> **最新版本 v1.3.0**：MCP 动态选择系统 - 支持 ace-tool / auggie 双 MCP 方案
 
 </div>
 
 ---
 
 ## 🎉 最新更新
+
+### v1.3.0 - MCP 动态选择系统 ⭐
+- ✅ **多 MCP 支持**：安装时可选 ace-tool（Prompt增强+代码检索）或 auggie（仅代码检索）
+- ✅ **交互式选择**：友好的 MCP 选择界面，对比功能差异
+- ✅ **配置驱动**：生成 `~/.ccg/config.toml`，命令模板自动适配
+- ✅ **简洁高效**：命令模板减少 50% 提示词，引用共享配置文档
+- ✅ **完全兼容**：11个命令模板支持动态 MCP 工具调用
+
+### v1.2.3 - 安装体验优化
+- ✅ **二进制验证**：安装后自动验证 `codeagent-wrapper` 可用性
+- ✅ **错误显示**：安装失败时显示详细错误信息和解决方案
+- ✅ **文档清理**：删除过时提示，优化用户体验
+
+### v1.2.0 - ROLE_FILE 动态注入 ⭐
+- ✅ **真正的动态注入**：`codeagent-wrapper` 自动识别 `ROLE_FILE:` 指令
+- ✅ **0 token 消耗**：Claude 无需先用 Read 工具读取提示词文件
+- ✅ **自动化管理**：一行 `ROLE_FILE:` 搞定，无需手动粘贴
+- ✅ **完整日志**：注入过程可追溯（文件路径、大小）
+
+### v1.1.3 - PATH 自动配置
+- ✅ **Mac/Linux**：自动添加到 `.zshrc` / `.bashrc`
+- ✅ **Windows**：详细手动配置指南 + PowerShell 一键命令
+- ✅ **智能检测**：避免重复配置
+- ✅ **开箱即用**：安装后直接可用 `codeagent-wrapper`
 
 ### v1.1.0 - 智能更新系统
 - ✅ **一键更新**：`npx ccg-workflow` 选择"更新工作流"
@@ -23,24 +47,14 @@
 - ✅ **强制修复**：支持强制重装，修复损坏的文件
 - ✅ **零权限**：无需 sudo，无需全局安装
 
-### v3.0.0 - 三 CLI 协作时代
+### v1.0.0 - npm 首次发布
 - ✅ 从 Python 脚本重构为 **TypeScript + unbuild** 构建系统
 - ✅ 发布到 npm: **`npx ccg-workflow`** 一键安装
 - ✅ 交互式配置菜单（初始化/更新/卸载）
-- ✅ 更好的跨平台兼容性
-
-### 三 CLI 协作时代
-- ✅ **Claude Code CLI** 作为主导编排者
-- ✅ **Codex CLI** 负责后端原型生成
-- ✅ **Gemini CLI** 负责前端原型生成
-- ✅ **Claude CLI** 子进程负责全栈整合
-- ✅ 新增 6 个 Claude 角色提示词
-- ✅ 从 12 个专家提示词扩展到 **18 个**
-
-### 配置系统升级
+- ✅ **三 CLI 协作**：Claude + Codex + Gemini
+- ✅ **18个专家提示词**：Codex 6个 + Gemini 6个 + Claude 6个
 - ✅ 配置文件从 `config.json` 迁移到 `~/.ccg/config.toml`
 - ✅ 支持 **smart/parallel/sequential** 三种协作模式
-- ✅ 可配置前端/后端模型优先级
 
 ---
 
@@ -79,7 +93,7 @@
 | **Claude Code 主导** | Claude Code CLI 作为编排者，Codex/Gemini/Claude 子进程协作 |
 | **三 CLI 协作** | 同时调用 Codex CLI + Gemini CLI + Claude CLI 进行交叉验证 |
 | **智能路由** | 前端任务 → Gemini，后端任务 → Codex，全栈整合 → Claude |
-| **Prompt 增强** | 集成 ace-tool MCP，自动优化需求描述 |
+| **Prompt 增强** | 支持 ace-tool / auggie MCP，可选 Prompt 自动优化 |
 | **6阶段工作流** | Prompt增强 → 上下文检索 → 三 CLI 分析 → 原型生成 → 代码实施 → 审计交付 |
 | **18个专家提示词** | Codex 6个 + Gemini 6个 + Claude 6个角色 |
 | **交互式安装** | npx 一键运行，图形化配置界面 |
@@ -141,11 +155,14 @@ pnpm start
 
 选择 **"初始化 CCG 配置"** 进行首次安装，会引导你：
 1. 选择语言（中文/English）
-2. 配置前端模型（Gemini/Codex/Claude）
-3. 配置后端模型（Codex/Gemini/Claude）
-4. 选择协作模式（并行/智能/顺序）
-5. 选择要安装的工作流
-6. 配置 ace-tool MCP（可选）
+2. **选择 MCP 代码检索工具**：
+   - **ace-tool**（推荐）：内置 Prompt 增强 + 代码检索
+   - **auggie**（官方原版）：仅代码检索，需查看[配置教程](https://linux.do/t/topic/1280612)
+   - **跳过**：稍后手动配置
+3. 配置前端模型（Gemini/Codex/Claude）
+4. 配置后端模型（Codex/Gemini/Claude）
+5. 选择协作模式（并行/智能/顺序）
+6. 选择要安装的工作流
 
 ### 更新到最新版
 
@@ -260,7 +277,7 @@ pnpm start
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   /ccg:dev 工作流（v3.0）                    │
+│                      /ccg:dev 工作流                         │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  Phase 0: Prompt 增强 (ace-tool prompt-enhancer)            │
@@ -322,7 +339,7 @@ pnpm start
 
 ```toml
 [general]
-version = "3.0.0"
+version = "1.2.3"
 language = "zh-CN"
 
 [routing]

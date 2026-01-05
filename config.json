@@ -22,8 +22,8 @@
           "description": "编译 codeagent-wrapper"
         },
         {
-          "type": "install_ace_tool",
-          "description": "安装 ace-tool MCP（轻量级代码检索 + Prompt 增强）"
+          "type": "install_mcp",
+          "description": "交互式选择并安装 MCP 工具（ace-tool 或 auggie）"
         }
       ]
     },

@@ -7,6 +7,102 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-01-05 ⭐
+
+### 重大更新：MCP 动态选择系统
+
+#### 核心特性
+
+- **多 MCP 支持**：安装时可选择 ace-tool（第三方封装）或 auggie（官方原版）
+- **交互式选择**：安装脚本提供友好的 MCP 选择界面，显示各选项的功能对比
+- **配置文件驱动**：生成 `~/.ccg/config.toml` 记录 MCP 选择，命令模板动态适配
+- **完全兼容**：命令模板根据配置自动使用正确的 MCP 工具名称
+- **简洁高效**：命令模板引用共享配置，避免重复说明
+
+#### 技术实现
+
+- **install.py 更新**：
+  - 新增 `choose_mcp_provider()` 函数：交互式选择界面
+  - 新增 `install_auggie()` 函数：安装 auggie MCP (`@augmentcode/auggie@prerelease`)
+  - 新增 `create_ccg_config()` 函数：生成配置文件 `~/.ccg/config.toml`
+  - 修改 `execute_operation()`：支持 `"install_mcp"` 操作类型，动态路由到不同的安装函数
+
+- **配置文件结构** (`~/.ccg/config.toml`)：
+  ```toml
+  [mcp]
+  provider = "ace-tool"  # ace-tool | auggie | none
+
+  [mcp.ace-tool]
+  tools = ["enhance_prompt", "search_context"]
+
+  [mcp.auggie]
+  tools = ["codebase-retrieval"]
+  note = "auggie 不包含 Prompt 增强工具，需手动配置"
+
+  [routing]
+  mode = "smart"
+  # ... 模型路由配置
+  ```
+
+- **命令模板更新**（11个命令文件）：
+  - 所有命令模板统一引用 `memorys/MCP_USAGE.md` 获取 MCP 调用规范
+  - 移除重复的 MCP 工具调用说明，减少 50% 的提示词长度
+  - 命令模板只需引用配置文件 `~/.ccg/config.toml` 中的工具映射表
+  - 支持文件：`dev.md`, `enhance.md`, `code.md`, `debug.md`, `bugfix.md`, `test.md`, `think.md`, `optimize.md`, `analyze.md`, `backend.md`, `frontend.md`, `review.md`
+
+- **工具映射对照**：
+  | 功能 | ace-tool | auggie |
+  |------|----------|--------|
+  | Prompt 增强 | `mcp__ace-tool__enhance_prompt` | ❌ 不支持 |
+  | 代码检索 | `mcp__ace-tool__search_context` | `mcp__auggie-mcp__codebase-retrieval` |
+
+#### 用户体验
+
+- **安装流程**：
+  1. 运行 `python3 install.py` 或 `npx ccg-workflow`
+  2. 看到 MCP 选择菜单，对比功能后选择
+  3. 自动安装并配置对应的 MCP 工具
+  4. 生成配置文件，记录选择
+
+- **使用体验**：
+  - 命令模板自动读取配置，无需手动修改
+  - ace-tool 用户：完整功能（Prompt 增强 + 代码检索）
+  - auggie 用户：代码检索功能，提示查看配置教程链接
+  - 配置教程：https://linux.do/t/topic/1280612
+
+#### 文档更新
+
+- `README.md`：更新"首次安装"部分，说明 MCP 选择步骤
+- `CLAUDE.md`：新增"MCP 工具选择"章节，详细说明两种 MCP 的区别
+- `memorys/MCP_USAGE.md`：创建共享的 MCP 调用规范文档，所有命令引用
+- `MCP_SELECTION_GUIDE.md`：创建工具映射指南，供开发者参考
+
+#### 优化亮点
+
+- **简洁性**：命令模板从平均 150 行减少到 80 行
+- **可维护性**：MCP 调用逻辑统一管理，修改一处即可
+- **可扩展性**：未来添加新 MCP 只需更新配置文件和 `MCP_USAGE.md`
+
+---
+
+## [1.2.3] - 2026-01-05
+
+### 新增
+
+- **二进制安装验证**：安装后自动验证 `codeagent-wrapper` 可用性
+  - 在 `installCodeagentWrapper()` 中新增验证步骤
+  - 执行 `codeagent-wrapper --version` 验证二进制文件正常运行
+  - 显示版本信息确认安装成功
+
+### 优化
+
+- **错误显示**：安装失败时显示详细错误信息
+  - 捕获并显示具体的错误消息
+  - 提供友好的错误提示和解决建议
+- **文档清理**：删除 `dev.md` 中的过时提示
+
+---
+
 ## [1.2.2] - 2026-01-05
 
 ### 优化

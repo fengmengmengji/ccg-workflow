@@ -148,6 +148,46 @@ def check_npm_installed() -> bool:
         return False
 
 
+def choose_mcp_provider() -> Optional[str]:
+    """
+    让用户选择 MCP 提供商
+    返回: "ace-tool" | "auggie" | None (跳过)
+    """
+    print("\n" + "=" * 60)
+    print("🔧 MCP 代码检索工具选择")
+    print("=" * 60)
+    print("\n请选择要安装的 MCP 工具：\n")
+
+    print("  [1] ace-tool (推荐)")
+    print("      • 第三方封装版本，使用更简单")
+    print("      • ✅ 内置 Prompt 增强工具 (enhance_prompt)")
+    print("      • ✅ 代码库上下文检索 (search_context)")
+    print("      • 需要注册获取 API Token: https://augmentcode.com/")
+    print()
+
+    print("  [2] auggie (官方原版)")
+    print("      • Augment 官方 MCP (@augmentcode/auggie)")
+    print("      • ⚠️  不包含 Prompt 增强工具")
+    print("      • ✅ 代码库上下文检索 (codebase-retrieval)")
+    print("      • 📖 配置说明: https://linux.do/t/topic/1280612")
+    print()
+
+    print("  [0] 跳过 MCP 安装 (稍后手动配置)")
+    print()
+
+    while True:
+        choice = input("请输入选项 [1/2/0]: ").strip()
+        if choice == "1":
+            return "ace-tool"
+        elif choice == "2":
+            return "auggie"
+        elif choice == "0":
+            print("  ℹ️  跳过 MCP 安装，稍后可手动配置")
+            return None
+        else:
+            print("  ❌ 无效选项，请输入 1、2 或 0")
+
+
 def install_ace_tool(verbose: bool = False) -> Tuple[bool, str]:
     """
     安装并配置 ace-tool MCP
@@ -244,6 +284,179 @@ def install_ace_tool(verbose: bool = False) -> Tuple[bool, str]:
             print(f"  ⚠️  验证异常: {e}")
 
     return True, f"ace-tool MCP 配置完成: {config_file}"
+
+
+def install_auggie(verbose: bool = False) -> Tuple[bool, str]:
+    """
+    安装并配置 auggie MCP (Augment 官方版本)
+    返回 (成功, 消息)
+    """
+    print("\n  🔧 配置 auggie MCP...")
+
+    # 检查 npm
+    if not check_npm_installed():
+        return False, "npm 未安装，请先安装 Node.js: https://nodejs.org/"
+
+    # 提示用户配置说明
+    print("\n  📖 auggie 配置说明:")
+    print("     详细配置教程: https://linux.do/t/topic/1280612")
+    print("     获取 API Token: 访问 https://augmentcode.com/ 注册")
+    print()
+    print("  ⚠️  注意: auggie 不包含 Prompt 增强工具")
+    print("     如需使用 Prompt 增强，请查看上述教程手动配置")
+    print()
+
+    # 安装 auggie
+    print("  🚀 安装 @augmentcode/auggie@prerelease...")
+    try:
+        result = subprocess.run(
+            ["npm", "install", "-g", "@augmentcode/auggie@prerelease"],
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        if result.returncode != 0:
+            return False, f"npm 安装失败: {result.stderr}"
+        if verbose:
+            print(f"  ✅ auggie 安装成功")
+    except subprocess.TimeoutExpired:
+        return False, "安装超时"
+    except Exception as e:
+        return False, f"安装异常: {e}"
+
+    # 获取 token
+    print("\n  请输入 API Token (从 https://augmentcode.com/ 获取):")
+    token = input("  Token: ").strip()
+    if not token:
+        print("  ⚠️  Token 为空，稍后可手动配置")
+        token = ""
+
+    # Claude Code CLI 的配置文件路径: ~/.claude.json
+    config_file = Path.home() / ".claude.json"
+
+    # 读取现有配置
+    existing_config = {}
+    if config_file.exists():
+        try:
+            with config_file.open("r", encoding="utf-8") as f:
+                existing_config = json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"  ⚠️  ~/.claude.json 解析失败: {e}")
+            return False, f"~/.claude.json 解析失败: {e}"
+        except Exception as e:
+            print(f"  ⚠️  读取 ~/.claude.json 失败: {e}")
+            return False, f"读取配置失败: {e}"
+
+    # 确保 mcpServers 字段存在
+    if "mcpServers" not in existing_config:
+        existing_config["mcpServers"] = {}
+
+    # 添加或更新 auggie 配置
+    existing_config["mcpServers"]["auggie-mcp"] = {
+        "type": "stdio",
+        "command": "auggie",
+        "env": {
+            "AUGMENT_API_KEY": token
+        }
+    }
+
+    # 写入配置
+    try:
+        with config_file.open("w", encoding="utf-8") as f:
+            json.dump(existing_config, f, indent=2, ensure_ascii=False)
+        if verbose:
+            print(f"  📄 已写入配置: {config_file}")
+    except Exception as e:
+        return False, f"写入配置失败: {e}"
+
+    print("\n  ✅ auggie MCP 配置完成")
+    print(f"  📖 详细配置说明: https://linux.do/t/topic/1280612")
+
+    return True, f"auggie MCP 配置完成: {config_file}"
+
+
+def create_ccg_config(mcp_provider: str, install_dir: Path, verbose: bool = False) -> bool:
+    """
+    创建 ~/.ccg/config.toml 配置文件
+
+    Args:
+        mcp_provider: "ace-tool" | "auggie" | "none"
+        install_dir: 安装目录 (通常是 ~/.claude)
+        verbose: 详细输出
+
+    Returns:
+        成功与否
+    """
+    ccg_dir = Path.home() / ".ccg"
+    config_file = ccg_dir / "config.toml"
+
+    # 确保目录存在
+    ensure_dir(ccg_dir)
+
+    # 生成配置内容
+    config_content = f"""# CCG (Claude + Codex + Gemini) 多模型协作系统配置
+# 生成时间: {subprocess.run(['date'], capture_output=True, text=True).stdout.strip()}
+
+[mcp]
+# MCP 提供商: ace-tool | auggie | none
+provider = "{mcp_provider}"
+
+[mcp.tools]
+# 工具名称映射（命令模板会自动读取此配置）
+# 代码检索工具
+code_search_ace = "mcp__ace-tool__search_context"
+code_search_auggie = "mcp__auggie-mcp__codebase-retrieval"
+
+# Prompt 增强工具
+prompt_enhance_ace = "mcp__ace-tool__enhance_prompt"
+prompt_enhance_auggie = ""  # auggie 不支持
+
+# 参数名称映射
+query_param_ace = "query"
+query_param_auggie = "information_request"
+
+[mcp.ace-tool]
+# ace-tool (第三方封装) 功能说明
+features = ["Prompt 增强", "代码检索"]
+setup_url = "https://augmentcode.com/"
+
+[mcp.auggie]
+# auggie (官方原版) 功能说明
+features = ["代码检索"]
+setup_url = "https://linux.do/t/topic/1280612"
+note = "auggie 不包含 Prompt 增强工具，需手动配置"
+
+[routing]
+# 路由模式: smart | parallel | sequential
+mode = "smart"
+
+[routing.frontend]
+# 前端任务路由配置
+models = ["gemini", "codex"]
+primary = "gemini"
+strategy = "parallel"
+
+[routing.backend]
+# 后端任务路由配置
+models = ["codex", "gemini"]
+primary = "codex"
+strategy = "parallel"
+
+[routing.review]
+# 代码审查路由配置
+models = ["codex", "gemini"]
+strategy = "parallel"
+"""
+
+    try:
+        with config_file.open("w", encoding="utf-8") as f:
+            f.write(config_content)
+        if verbose:
+            print(f"  📄 已创建配置: {config_file}")
+        return True
+    except Exception as e:
+        print(f"  ⚠️  创建配置失败: {e}", file=sys.stderr)
+        return False
 
 
 def get_prebuilt_binary(source_dir: Path) -> Optional[Path]:
@@ -456,6 +669,7 @@ def execute_operation(
                 return False
 
         elif op_type == "install_ace_tool":
+            # 兼容旧配置，直接安装 ace-tool
             success, message = install_ace_tool(verbose)
             if not success:
                 print(f"  ⚠️  {message}")
@@ -463,6 +677,38 @@ def execute_operation(
                 return True  # 不阻止其他安装
             if verbose:
                 print(f"  ℹ️  {message}")
+            # 创建配置文件
+            create_ccg_config("ace-tool", install_dir, verbose)
+
+        elif op_type == "install_mcp":
+            # 动态 MCP 选择
+            mcp_provider = choose_mcp_provider()
+
+            if mcp_provider is None:
+                print("  ⚠️  跳过 MCP 安装")
+                create_ccg_config("none", install_dir, verbose)
+                return True  # 不阻止其他安装
+
+            # 根据选择安装对应的 MCP
+            if mcp_provider == "ace-tool":
+                success, message = install_ace_tool(verbose)
+            elif mcp_provider == "auggie":
+                success, message = install_auggie(verbose)
+            else:
+                print(f"  ❌ 未知的 MCP 提供商: {mcp_provider}", file=sys.stderr)
+                return False
+
+            if not success:
+                print(f"  ⚠️  {message}")
+                print(f"  ℹ️  可稍后手动配置 MCP")
+                create_ccg_config("none", install_dir, verbose)
+                return True  # 不阻止其他安装
+
+            if verbose:
+                print(f"  ℹ️  {message}")
+
+            # 创建配置文件
+            create_ccg_config(mcp_provider, install_dir, verbose)
 
         else:
             print(f"  ⚠️  未知操作类型: {op_type}", file=sys.stderr)
