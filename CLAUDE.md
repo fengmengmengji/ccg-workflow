@@ -198,6 +198,53 @@ python3 install.py
 
 ---
 
+## NPM 发布流程
+
+### 前置要求
+- npm 账户：`fengli_1227`
+- npm token：Automation token (已配置在 `~/.npmrc`，绕过 2FA)
+
+### 发布步骤
+
+1. **更新版本号**
+   ```bash
+   # 编辑 package.json
+   # "version": "1.0.x" → "1.0.y"
+   ```
+
+2. **配置 npm token**（一次性配置，已完成）
+   ```bash
+   # Token 已配置在 ~/.npmrc
+   # 格式: //registry.npmjs.org/:_authToken=npm_YOUR_TOKEN
+   ```
+
+3. **构建并发布**
+   ```bash
+   pnpm build
+   npm publish
+   ```
+
+4. **提交到 Git**
+   ```bash
+   git add -A
+   git commit -m "chore: bump version to x.y.z"
+   git push origin main
+   ```
+
+### 验证发布
+```bash
+npm view ccg-workflow version
+npm view ccg-workflow time
+```
+
+### 注意事项
+- ✅ 确保 token 写入 `~/.npmrc` 才能绕过 2FA
+- ✅ `prepublishOnly` 钩子会自动运行 `pnpm build`
+- ✅ 发布前确保所有测试通过
+- ✅ 遵循语义化版本规范（SemVer）
+
+---
+
 ## Dependencies
 
 - Python 3.8+
