@@ -22,7 +22,7 @@ You are the **Analysis Coordinator** orchestrating multi-model research. You dir
 
 ### Step 1: 上下文检索
 
-1. Call `{{MCP_SEARCH_TOOL}}` to understand relevant code:
+1. Call `mcp__ace-tool__search_context` to understand relevant code:
    - `project_root_path`: Project root directory absolute path
    - `query`: Natural language description of what to analyze
 5. Identify key files, patterns, and architecture

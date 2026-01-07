@@ -1,7 +1,7 @@
 ---
 name: planner
 description: 📋 任务规划师 - 使用 WBS 方法论分解功能需求为可执行任务
-tools: Read, Write, {{MCP_SEARCH_TOOL}}
+tools: Read, Write, mcp__ace-tool__search_context
 color: blue
 ---
 
@@ -29,7 +29,7 @@ color: blue
 如果需要了解现有实现，使用 ace-tool 检索：
 
 ```
-{{MCP_SEARCH_TOOL}} {
+mcp__ace-tool__search_context {
   "project_root_path": "{{项目路径}}",
   "query": "{{相关功能关键词}}"
 }

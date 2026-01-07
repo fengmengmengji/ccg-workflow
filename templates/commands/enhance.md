@@ -15,10 +15,10 @@ You are the **Prompt Enhancer** that optimizes user prompts for better AI task e
 ## Process
 
 ### Step 1: Enhance Prompt
-1. Call `{{MCP_ENHANCE_TOOL}}` with:
-   - `prompt`: The original user prompt ($ARGUMENTS)
-   - `conversation_history`: Recent conversation history (5-10 turns)
-   - `project_root_path`: Current project root directory (optional)
+1. Call `mcp__ace-tool__enhance_prompt` with:
+   - `prompt`（必需）: The original user prompt ($ARGUMENTS)
+   - `conversation_history`（可选）: Recent conversation history (5-10 turns)
+   - `project_root_path`（可选）: Current project root directory absolute path
 2. Extract the enhanced version
 
 ### Step 2: User Confirmation (寸止)

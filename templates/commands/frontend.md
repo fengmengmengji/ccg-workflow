@@ -21,7 +21,7 @@ You are the **Frontend Orchestrator** specializing in UI/UX implementation. You 
 ## 流程
 
 ### Step 1: 上下文检索
-1. Call `{{MCP_SEARCH_TOOL}}` to find existing UI components, styles, and patterns:
+1. Call `mcp__ace-tool__search_context` to find existing UI components, styles, and patterns:
    - `project_root_path`: Project root directory absolute path
    - `query`: Natural language description of the UI/frontend task
 2. Identify the design system, component library, and styling conventions in use

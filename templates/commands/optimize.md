@@ -15,7 +15,7 @@ description: 多模型性能优化（Codex 后端优化 + Gemini 前端优化）
 ## 流程
 
 ### Phase 1: 性能基线分析
-1. 调用 `{{MCP_SEARCH_TOOL}}` 检索目标代码:
+1. 调用 `mcp__ace-tool__search_context` 检索目标代码:
    - `project_root_path`: 项目根目录绝对路径
    - `query`: 需要优化的目标代码描述
 2. 识别性能关键路径

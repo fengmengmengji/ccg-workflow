@@ -16,7 +16,7 @@ description: 三模型代码生成（Codex + Gemini + Claude 并行原型，集�
 
 ### Phase 1: 需求分析
 
-1. 调用 `{{MCP_SEARCH_TOOL}}` 检索:
+1. 调用 `mcp__ace-tool__search_context` 检索:
    - `project_root_path`: 项目根目录绝对路径
    - `query`: 功能需求的自然语言描述
    - 相关模块和文件结构

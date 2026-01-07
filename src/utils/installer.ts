@@ -235,7 +235,8 @@ export function getWorkflowById(id: string): WorkflowConfig | undefined {
 
 /**
  * Replace template variables in content based on user configuration
- * This injects MCP tools, model routing, and other configs at install time
+ * This injects model routing configs at install time
+ * Note: MCP tool names are now hardcoded to ace-tool in templates
  */
 function injectConfigVariables(content: string, config: {
   mcpProvider: string
@@ -248,22 +249,7 @@ function injectConfigVariables(content: string, config: {
 }): string {
   let processed = content
 
-  // 1. MCP tool name injection
-  if (config.mcpProvider === 'ace-tool') {
-    processed = processed.replace(/\{\{MCP_SEARCH_TOOL\}\}/g, 'mcp__ace-tool__search_context')
-    processed = processed.replace(/\{\{MCP_ENHANCE_TOOL\}\}/g, 'mcp__ace-tool__enhance_prompt')
-    processed = processed.replace(/\{\{MCP_SEARCH_PARAM\}\}/g, 'query')
-    processed = processed.replace(/\{\{MCP_ENHANCE_PARAM\}\}/g, 'prompt')
-  }
-  else {
-    // Default to auggie
-    processed = processed.replace(/\{\{MCP_SEARCH_TOOL\}\}/g, 'mcp__auggie-mcp__codebase-retrieval')
-    processed = processed.replace(/\{\{MCP_ENHANCE_TOOL\}\}/g, 'mcp__auggie-mcp__enhance_prompt')
-    processed = processed.replace(/\{\{MCP_SEARCH_PARAM\}\}/g, 'information_request')
-    processed = processed.replace(/\{\{MCP_ENHANCE_PARAM\}\}/g, 'prompt')
-  }
-
-  // 2. Model routing injection
+  // Model routing injection
   const routing = config.routing || {}
 
   // Frontend models

@@ -40,11 +40,11 @@ tools: Task, Read, Write, Bash, AskUserQuestion, Glob
 
 #### 2.1 上下文检索
 
-调用 {{MCP_SEARCH_TOOL}} 检索相关代码：
+调用 mcp__ace-tool__search_context 检索相关代码：
 
 ```
-{{MCP_SEARCH_TOOL}} {
-  "{{MCP_SEARCH_PARAM}}": "{{用户需求关键词}} + 相关代码实现、API、组件、数据模型、技术栈"
+mcp__ace-tool__search_context {
+  "query": "{{用户需求关键词}} + 相关代码实现、API、组件、数据模型、技术栈"
 }
 ```
 

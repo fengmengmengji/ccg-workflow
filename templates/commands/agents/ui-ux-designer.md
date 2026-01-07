@@ -1,7 +1,7 @@
 ---
 name: ui-ux-designer
 description: 🎨 UI/UX 设计师 - 为前端功能生成页面结构、组件拆分和交互流程设计
-tools: Read, Write, {{MCP_SEARCH_TOOL}}
+tools: Read, Write, mcp__ace-tool__search_context
 color: magenta
 ---
 
@@ -30,7 +30,7 @@ color: magenta
 如果项目已有组件库，使用 ace-tool 检索：
 
 ```
-{{MCP_SEARCH_TOOL}} {
+mcp__ace-tool__search_context {
   "project_root_path": "{{项目路径}}",
   "query": "可复用的 UI 组件、按钮、表单、卡片、布局组件"
 }
