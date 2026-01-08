@@ -6,6 +6,43 @@ description: '智能功能开发 - 自动识别输入类型，规划/讨论/实�
 
 $ARGUMENTS
 
+---
+
+## 多模型调用规范
+
+**调用语法**（并行用 `run_in_background: true`，串行用 `false`）：
+
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend <codex|gemini> [--resume <SESSION_ID>] - \"$PWD\" <<'EOF'
+ROLE_FILE: <角色提示词路径>
+<TASK>
+需求：<增强后的需求（如未增强则用 $ARGUMENTS）>
+上下文：<前序阶段收集的项目上下文、计划文件内容等>
+</TASK>
+OUTPUT: 期望输出格式
+EOF",
+  run_in_background: true,
+  timeout: 3600000,
+  description: "简短描述"
+})
+```
+
+**角色提示词**：
+
+| 阶段 | Codex | Gemini |
+|------|-------|--------|
+| 分析 | `~/.claude/.ccg/prompts/codex/analyzer.md` | `~/.claude/.ccg/prompts/gemini/analyzer.md` |
+| 规划 | `~/.claude/.ccg/prompts/codex/architect.md` | `~/.claude/.ccg/prompts/gemini/architect.md` |
+| 实施 | `~/.claude/.ccg/prompts/codex/architect.md` | `~/.claude/.ccg/prompts/gemini/frontend.md` |
+| 审查 | `~/.claude/.ccg/prompts/codex/reviewer.md` | `~/.claude/.ccg/prompts/gemini/reviewer.md` |
+
+**会话复用**：每次调用返回 `SESSION_ID: xxx`，后续阶段用 `--resume xxx` 复用上下文。
+
+**并行调用**：使用 `run_in_background: true` 启动，用 `TaskOutput` 等待结果。**必须等所有模型返回后才能进入下一阶段**。
+
+---
+
 ## 核心工作流程
 
 ### 1. 输入类型判断
@@ -24,10 +61,7 @@ $ARGUMENTS
 
 #### 2.0 Prompt 增强
 
-**如果 ace-tool MCP 可用**，调用 `mcp__ace-tool__enhance_prompt`：
-- 输入原始任务描述
-- 获取增强后的详细需求
-- **用增强结果替代原始 $ARGUMENTS，后续调用 Codex/Gemini 时传入增强后的需求**
+**如果 ace-tool MCP 可用**，调用 `mcp__ace-tool__enhance_prompt`，**用增强结果替代原始 $ARGUMENTS，后续调用 Codex/Gemini 时传入增强后的需求**
 
 #### 2.1 上下文检索
 
@@ -85,36 +119,13 @@ $ARGUMENTS
 
 #### 3.3 多模型路由实施
 
-**调用语法**：
+按上方调用规范调用外部模型：
 
-```
-Bash({
-  command: "~/.claude/bin/codeagent-wrapper --backend <codex|gemini> - \"$PWD\" <<'EOF'
-ROLE_FILE: <角色提示词路径>
-<TASK>
-需求：<增强后的需求（如未增强则用 $ARGUMENTS）>
-上下文：<计划文件内容、项目上下文>
-</TASK>
-OUTPUT: 生产级代码
-EOF",
-  run_in_background: true,
-  timeout: 3600000,
-  description: "简短描述"
-})
-```
+- **前端任务**：调用 Gemini，使用实施提示词
+- **后端任务**：调用 Codex，使用实施提示词
+- **全栈任务**：并行调用 Codex + Gemini（`run_in_background: true`），用 `TaskOutput` 等待结果
 
-**前端任务 → Gemini**：
-- 角色提示词：`~/.claude/.ccg/prompts/gemini/frontend.md`
-- 输出：前端组件代码
-
-**后端任务 → Codex**：
-- 角色提示词：`~/.claude/.ccg/prompts/codex/architect.md`
-- 输出：后端 API 代码
-
-**全栈任务 → 并行调用**（`run_in_background: true`）：
-1. Codex 后端 + Gemini 前端同时运行
-2. 使用 `TaskOutput` 监控并获取结果
-3. **⚠️ 强制规则：必须等待 TaskOutput 返回两个模型的完整结果后才能进入下一阶段**
+**⚠️ 强制规则：必须等待 TaskOutput 返回所有模型的完整结果后才能进入下一阶段**
 
 #### 3.4 实施后验证
 
