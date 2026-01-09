@@ -307,6 +307,8 @@ Windows：
 <details>
 <summary><strong>Q6: 如何卸载？</strong></summary>
 
+**方式 1：交互式卸载**
+
 ```bash
 npx ccg-workflow
 # 选择 "卸载工作流"
@@ -316,8 +318,36 @@ npx ccg-workflow
 - `~/.claude/commands/ccg/` - 命令文件
 - `~/.claude/agents/ccg/` - 子智能体
 - `~/.claude/skills/` - skills
-- `~/.claude/bin/codeagent-wrapper` - 二进制文件
+- `~/.claude/bin/codeagent-wrapper*` - 二进制文件
 - `~/.claude/.ccg/` - 配置目录（可选保留）
+
+**方式 2：手动清理**
+
+```bash
+# 删除所有安装文件
+rm -rf ~/.claude/commands/ccg
+rm -rf ~/.claude/agents/ccg
+rm -rf ~/.claude/skills/multi-model-collaboration
+rm -rf ~/.claude/bin/codeagent-wrapper*
+rm -rf ~/.claude/.ccg
+
+# 清理 MCP 配置（如果安装了 ace-tool）
+# 手动编辑 ~/.claude.json 删除 ace-tool 相关配置
+```
+
+**⚠️ 注意：npx 缓存问题**
+
+`ccg-workflow` 通过 npx 运行，npx 会缓存已下载的包。如果卸载后重新安装仍使用旧版本，需要清理 npx 缓存：
+
+```bash
+# 清理 npx 缓存（强制下载最新版本）
+npx clear-npx-cache
+# 或
+rm -rf ~/.npm/_npx
+
+# 然后重新安装
+npx ccg-workflow@latest
+```
 
 </details>
 
@@ -352,7 +382,7 @@ Copyright (c) 2025 fengshao1227
 
 <div align="center">
 
-**版本**: v1.7.3 | **最后更新**: 2026-01-09
+**版本**: v1.7.10 | **最后更新**: 2026-01-09
 
 Made with ❤️ by the CCG Community
 

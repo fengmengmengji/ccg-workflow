@@ -2,11 +2,22 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-01-08 (v1.7.2)
+**Last Updated**: 2026-01-09 (v1.7.10)
 
 ---
 
 ## 变更记录 (Changelog)
+
+### 2026-01-09 (v1.7.10)
+- 🐛 **修复 Windows 路径兼容性问题**：新增 `convertToGitBashPath` 函数，支持 Windows 路径转换（`C:\Users\...` → `/c/Users/...`）
+- 🐛 **修复配置迁移问题**：update 命令现在会自动检测并执行从 `~/.ccg` 到 `~/.claude/.ccg` 的迁移
+- 🐛 **修复 Windows npx 缓存问题**：update 命令在 Windows 上自动清理 npx 缓存，确保拉取最新版本
+- 📝 **完善卸载与更新文档**：README 中新增 npx 缓存清理说明
+- 🔧 **涉及文件**：
+  - `src/utils/installer.ts` - 添加路径转换函数
+  - `src/commands/update.ts` - 添加迁移逻辑 + Windows npx 缓存清理
+  - `README.md` - 完善卸载说明 + npx 缓存清理指引
+- 🧪 **测试验证**：所有平台二进制文件已重新编译
 
 ### 2026-01-08 (v1.7.2)
 - 🐛 **修复单独调用语法**：backend/frontend 的单独调用示例现在使用正确的参数

@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.10] - 2026-01-09
+
+### 🐛 Bug 修复
+
+**Windows 兼容性与升级体验优化**
+
+#### 核心修复
+
+1. **修复 Windows 路径兼容性问题**
+   - ✅ 新增 `convertToGitBashPath` 函数，将 Windows 路径转换为 Git Bash 兼容格式
+   - ✅ 修复路径从 `C:\Users\zlb\.claude\bin` 变形为 `C:Userszlb/.claude/bin` 的问题
+   - ✅ 支持所有驱动器盘符（C:, D:, E: 等）自动转换为 `/c/`, `/d/`, `/e/`
+   - ✅ 影响所有调用 codeagent-wrapper 的命令（backend、frontend、workflow、analyze 等）
+   - 📝 修改文件：`src/utils/installer.ts`
+
+2. **修复配置迁移问题**
+   - ✅ `update` 命令现在会自动检测并执行从 `~/.ccg` 到 `~/.claude/.ccg` 的迁移
+   - ✅ 从 v1.3.x 升级到 v1.7.x 时自动迁移配置文件和 prompts
+   - ✅ 显示详细的迁移日志（已迁移文件、已跳过文件、错误信息）
+   - 📝 修改文件：`src/commands/update.ts`
+
+3. **修复 Windows npx 缓存问题**
+   - ✅ `update` 命令在 Windows 上自动清理 npx 缓存
+   - ✅ 确保更新时拉取最新版本，而不是使用缓存的旧版本
+   - ✅ 先尝试 `npx clear-npx-cache`，失败则手动删除 `~/.npm/_npx`
+   - 📝 修改文件：`src/commands/update.ts`
+
+### 📝 文档改进
+
+1. **完善卸载与更新文档**
+   - ✅ README 中增加完整的卸载说明（交互式 + 手动清理）
+   - ✅ **新增 npx 缓存清理说明**，解决更新后仍使用旧版本的问题
+   - ✅ 提供手动清理 MCP 配置的指引
+   - 📝 修改文件：`README.md`
+
+### 🧪 测试验证
+
+- ✅ Windows 路径转换测试（6 个测试用例全部通过）
+- ✅ 所有平台二进制文件已重新编译（macOS、Linux、Windows × amd64/arm64）
+- ✅ TypeScript 类型检查通过
+- ✅ 构建测试通过
+
+### 💡 用户价值
+
+- **Windows 用户**：彻底解决路径兼容性问题，codeagent-wrapper 正常调用
+- **升级用户**：自动迁移配置 + npx 缓存清理指引，确保使用最新版本
+
+---
+
 ## [1.6.0] - 2026-01-07
 
 ### ✨ 功能增强

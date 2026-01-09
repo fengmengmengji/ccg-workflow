@@ -9,6 +9,7 @@ import { join } from 'pathe'
 import { checkForUpdates } from '../utils/version'
 import { installWorkflows } from '../utils/installer'
 import { readCcgConfig, writeCcgConfig } from '../utils/config'
+import { migrateToV1_4_0, needsMigration } from '../utils/migration'
 import { i18n } from '../i18n'
 
 const execAsync = promisify(exec)
@@ -155,10 +156,32 @@ async function performUpdate(fromVersion: string, toVersion: string, isNewVersio
   console.log(ansis.yellow.bold('⚙️  开始更新...'))
   console.log()
 
-  // Step 1: Download latest package
+  // Step 1: Download latest package (force fresh download)
   let spinner = ora('正在下载最新版本...').start()
 
   try {
+    // Clear npx cache first to ensure we get the latest version
+    // This is especially important on Windows where npx caching can be aggressive
+    if (process.platform === 'win32') {
+      spinner.text = '正在清理 npx 缓存...'
+      try {
+        // Try to clear npx cache on Windows
+        await execAsync('npx clear-npx-cache', { timeout: 10000 })
+      }
+      catch {
+        // If clear-npx-cache doesn't work, manually remove cache directory
+        const npxCachePath = join(homedir(), '.npm', '_npx')
+        try {
+          const fs = await import('fs-extra')
+          await fs.remove(npxCachePath)
+        }
+        catch {
+          // Cache clearing failed, but continue anyway
+        }
+      }
+    }
+
+    spinner.text = '正在下载最新版本...'
     // Download latest package using npx with --yes flag
     await execAsync(`npx --yes ccg-workflow@latest --version`, { timeout: 60000 })
     spinner.succeed('最新版本下载完成')
@@ -169,10 +192,40 @@ async function performUpdate(fromVersion: string, toVersion: string, isNewVersio
     return
   }
 
-  // Step 2: Read current config (no reconfiguration needed - routing is fixed since v1.7.0)
+  // Step 2: Auto-migrate from old directory structure (if needed)
+  if (await needsMigration()) {
+    spinner = ora('检测到旧版本配置，正在迁移...').start()
+    const migrationResult = await migrateToV1_4_0()
+
+    if (migrationResult.migratedFiles.length > 0) {
+      spinner.info(ansis.cyan('配置迁移完成:'))
+      console.log()
+      for (const file of migrationResult.migratedFiles) {
+        console.log(`  ${ansis.green('✓')} ${file}`)
+      }
+      if (migrationResult.skipped.length > 0) {
+        console.log()
+        console.log(ansis.gray('  已跳过:'))
+        for (const file of migrationResult.skipped) {
+          console.log(`  ${ansis.gray('○')} ${file}`)
+        }
+      }
+      console.log()
+    }
+
+    if (migrationResult.errors.length > 0) {
+      spinner.warn(ansis.yellow('迁移完成，但有部分错误:'))
+      for (const error of migrationResult.errors) {
+        console.log(`  ${ansis.red('✗')} ${error}`)
+      }
+      console.log()
+    }
+  }
+
+  // Step 3: Read current config (no reconfiguration needed - routing is fixed since v1.7.0)
   const config = await readCcgConfig()
 
-  // Step 3: Delete old workflows and install new ones
+  // Step 4: Delete old workflows and install new ones
   spinner = ora('正在更新工作流和 codeagent-wrapper 二进制...').start()
 
   try {

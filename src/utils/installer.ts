@@ -288,6 +288,26 @@ function injectConfigVariables(content: string, config: {
 }
 
 /**
+ * Convert Windows path to Git Bash compatible format
+ * C:\Users\zlb → /c/Users/zlb
+ * D:\code → /d/code
+ */
+function convertToGitBashPath(windowsPath: string): string {
+  if (!isWindows()) {
+    return windowsPath
+  }
+
+  // Normalize to forward slashes first
+  let path = windowsPath.replace(/\\/g, '/')
+
+  // Convert drive letter: C:/Users/... → /c/Users/...
+  // Match pattern: [A-Z]:/ at the start
+  path = path.replace(/^([A-Z]):/i, (_, drive) => `/${drive.toLowerCase()}`)
+
+  return path
+}
+
+/**
  * Replace ~ paths in template content with absolute paths
  * This fixes Windows multi-user path resolution issues
  */
@@ -295,12 +315,21 @@ function replaceHomePathsInTemplate(content: string, installDir: string): string
   // Get absolute paths for replacement
   const userHome = homedir()
   const ccgDir = join(installDir, '.ccg')
+  const binDir = join(installDir, 'bin')
+
+  // Convert paths to Git Bash format on Windows
+  const userHomePath = convertToGitBashPath(userHome)
+  const ccgDirPath = convertToGitBashPath(ccgDir)
+  const binDirPath = convertToGitBashPath(binDir)
 
   // Replace all instances of ~/.claude/.ccg with absolute path
-  let processed = content.replace(/~\/\.claude\/\.ccg/g, ccgDir)
+  let processed = content.replace(/~\/\.claude\/\.ccg/g, ccgDirPath)
+
+  // Replace ~/.claude/bin with absolute path (for codeagent-wrapper)
+  processed = processed.replace(/~\/\.claude\/bin/g, binDirPath)
 
   // Replace other ~/ patterns with user home (if any)
-  processed = processed.replace(/~\//g, `${userHome}/`)
+  processed = processed.replace(/~\//g, `${userHomePath}/`)
 
   return processed
 }
