@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.17] - 2026-01-12
+
+### 🐛 Bug 修复
+
+**修复 Windows 系统 Codex 完成检测问题**
+
+#### 问题背景
+
+用户在 Windows 系统上使用 Codex 时遇到问题：
+- Codex 任务实际已完成（Web 界面显示完成，输出了 `agent_message`）
+- 但 Claude Code 一直显示 "Codex 响应较慢" 或继续等待
+- 导致用户体验不佳，需要手动中断
+
+**根本原因**：
+- `codeagent-wrapper` 的 `postMessageTerminateDelay` 设置为 1 秒
+- Codex CLI 在输出 `agent_message` 后，发送完成事件（`turn.completed`/`thread.completed`）可能有延迟
+- 在 Windows 系统上，这个延迟经常超过 1 秒
+- 导致 wrapper 在收到完成事件前就尝试终止进程，上层认为任务未完成
+
+#### 核心修复
+
+1. **增加默认延迟时间**：从 1 秒增加到 5 秒
+   - 给 Codex CLI 足够时间发送完成事件
+   - 解决 Windows 系统上的延迟问题
+
+2. **添加环境变量支持**：`CODEAGENT_POST_MESSAGE_DELAY`
+   - 用户可以根据网络环境自定义延迟时间（单位：秒）
+   - 默认值：5 秒
+   - 最大值：60 秒（防止过长等待）
+   - 示例：`export CODEAGENT_POST_MESSAGE_DELAY=10`
+
+3. **代码改进**：
+   - 将硬编码常量 `postMessageTerminateDelay` 改为函数 `resolvePostMessageDelay()`
+   - 添加环境变量解析和验证逻辑
+   - 添加详细的注释说明延迟的作用
+
+#### 影响范围
+
+- ✅ **修复前**：Windows 用户经常遇到 Codex 任务"假性未完成"
+- ✅ **修复后**：所有平台均能正确检测 Codex 完成状态
+- ✅ **向后兼容**：默认 5 秒延迟对所有平台都适用，不影响现有用户
+
+#### 技术细节
+
+修改文件：`codeagent-wrapper/executor.go`
+- 添加 `resolvePostMessageDelay()` 函数（第 22-45 行）
+- 修改 `runCodexTaskWithContext()` 中的定时器创建（第 1136 行）
+- 添加 `strconv` 导入以支持环境变量解析
+
+---
+
 ## [1.7.16] - 2026-01-10
 
 ### 🐛 Bug 修复

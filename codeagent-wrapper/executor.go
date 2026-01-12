@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -18,7 +19,30 @@ import (
 	"time"
 )
 
-const postMessageTerminateDelay = 1 * time.Second
+// resolvePostMessageDelay returns the delay duration after receiving agent_message
+// before terminating the backend process. This delay allows the backend to send
+// completion events (turn.completed/thread.completed) which may arrive after the message.
+// Default: 5 seconds (increased from 1s to fix Windows Codex completion detection)
+// Override via CODEAGENT_POST_MESSAGE_DELAY environment variable (in seconds)
+func resolvePostMessageDelay() time.Duration {
+	raw := strings.TrimSpace(os.Getenv("CODEAGENT_POST_MESSAGE_DELAY"))
+	if raw == "" {
+		return 5 * time.Second // Default: 5 seconds
+	}
+
+	value, err := strconv.Atoi(raw)
+	if err != nil || value < 0 {
+		logWarn(fmt.Sprintf("Invalid CODEAGENT_POST_MESSAGE_DELAY=%q, falling back to 5s", raw))
+		return 5 * time.Second
+	}
+
+	if value > 60 {
+		logWarn(fmt.Sprintf("CODEAGENT_POST_MESSAGE_DELAY=%d exceeds 60s, capping at 60s", value))
+		return 60 * time.Second
+	}
+
+	return time.Duration(value) * time.Second
+}
 
 // commandRunner abstracts exec.Cmd for testability
 type commandRunner interface {
@@ -1109,7 +1133,7 @@ waitLoop:
 			if messageTimer != nil {
 				continue
 			}
-			messageTimer = time.NewTimer(postMessageTerminateDelay)
+			messageTimer = time.NewTimer(resolvePostMessageDelay())
 			messageTimerCh = messageTimer.C
 		case <-messageSeen:
 			messageSeenObserved = true
