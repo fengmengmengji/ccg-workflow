@@ -7,6 +7,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.21] - 2026-01-13
+
+### 🐛 Bug 修复
+
+**彻底修复 Windows 系统 Codex 进程无法自动终止问题**
+
+#### 问题背景
+
+v1.7.18 的修复不完整，Windows 上 Codex 完成后进程仍然卡住：
+- Web UI 显示完成，但 codeagent-wrapper 进程一直不退出
+- 只有手动杀死进程才能继续
+- Mac 没问题，Windows 的 Gemini 也没问题
+
+#### 根本原因分析
+
+1. **进程树问题**：`proc.Kill()` 只终止主进程，Codex 启动的子进程（Node.js workers）仍然运行，持有 stdout handle
+2. **阻塞等待问题**：`messageTimerCh` case 里直接 `waitErr = <-waitCh` 阻塞等待，如果进程没被杀死就永远卡住
+
+#### 核心修复
+
+1. **使用 `taskkill /T` 终止整个进程树**：
+   - 新增 `killProcessTree()` 函数，使用 `taskkill /T /F /PID` 递归杀死所有子进程
+   - `terminateCommand()`、`terminateProcess()`、`forwardSignals()` 在 Windows 上调用进程树终止
+
+2. **移除阻塞等待**：
+   - `messageTimerCh` case 里不再直接阻塞等待 `waitCh`
+   - 让循环继续，下一轮通过 `case waitErr = <-waitCh` 正常退出
+   - 即使 `taskkill` 失败，也不会永远卡住
+
+#### 技术细节
+
+修改文件：`codeagent-wrapper/executor.go`
+
+```go
+// 新增：Windows 进程树终止
+func killProcessTree(pid int) error {
+    if !isWindows() {
+        return nil
+    }
+    cmd := exec.Command("taskkill", "/T", "/F", "/PID", fmt.Sprintf("%d", pid))
+    return cmd.Run()
+}
+
+// 修改：terminateCommand 使用进程树终止
+if isWindows() {
+    if err := killProcessTree(proc.Pid()); err != nil {
+        _ = proc.Kill() // fallback
+    }
+}
+
+// 修改：messageTimerCh case 不再阻塞
+case <-messageTimerCh:
+    // ...terminate logic...
+    // Do NOT block here - let loop continue
+```
+
+#### 影响范围
+
+- ✅ **修复前**：Windows 用户 Codex 完成后进程卡住
+- ✅ **修复后**：所有平台进程正确终止
+- ✅ **向后兼容**：Unix 平台行为不变
+
+#### codeagent-wrapper 版本
+
+- 升级至 v5.6.0
+- 重新编译所有平台二进制文件
+
+---
+
 ## [1.7.20] - 2026-01-13
 
 ### 🐛 Bug 修复

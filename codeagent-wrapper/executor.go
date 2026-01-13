@@ -1126,8 +1126,9 @@ waitLoop:
 					terminated = true
 				}
 			}
-			waitErr = <-waitCh
-			break waitLoop
+			// Do NOT block here waiting for waitCh - let the loop continue
+			// This is critical for Windows where process termination may fail silently
+			// The next iteration will catch waitCh if the process exits
 		case <-completeSeen:
 			completeSeenObserved = true
 			if messageTimer != nil {
@@ -1256,9 +1257,11 @@ func forwardSignals(ctx context.Context, cmd commandRunner, logErrorFn func(stri
 		case sig := <-sigCh:
 			logErrorFn(fmt.Sprintf("Received signal: %v", sig))
 			if proc := cmd.Process(); proc != nil {
-				// Windows does not support SIGTERM - use Kill() directly
+				// Windows does not support SIGTERM - use taskkill /T to kill process tree
 				if isWindows() {
-					_ = proc.Kill()
+					if err := killProcessTree(proc.Pid()); err != nil {
+						_ = proc.Kill()
+					}
 				} else {
 					_ = proc.Signal(syscall.SIGTERM)
 					time.AfterFunc(time.Duration(forceKillDelay.Load())*time.Second, func() {
@@ -1322,6 +1325,26 @@ func (t *forceKillTimer) Stop() {
 	t.stopped.Store(true)
 }
 
+// killProcessTree terminates a process and all its child processes on Windows.
+// Uses taskkill /T /F /PID which recursively kills the entire process tree.
+// This is necessary because Codex CLI may spawn child processes (Node.js workers, etc.)
+// that inherit stdout handles and prevent the parent from exiting cleanly.
+// Returns nil on non-Windows platforms or if the process has already exited.
+func killProcessTree(pid int) error {
+	if !isWindows() {
+		return nil
+	}
+	if pid <= 0 {
+		return nil
+	}
+
+	// taskkill /T = kill process tree, /F = force, /PID = process ID
+	cmd := exec.Command("taskkill", "/T", "/F", "/PID", fmt.Sprintf("%d", pid))
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	return cmd.Run()
+}
+
 func terminateCommand(cmd commandRunner) *forceKillTimer {
 	if cmd == nil {
 		return nil
@@ -1333,9 +1356,14 @@ func terminateCommand(cmd commandRunner) *forceKillTimer {
 
 	// Windows does not support SIGTERM - it silently fails without terminating the process.
 	// This causes codeagent-wrapper to hang waiting for the process to exit.
-	// On Windows, we directly use Kill() which calls TerminateProcess().
+	// On Windows, we use taskkill /T to kill the entire process tree, not just the main process.
+	// This is critical because Codex CLI spawns child processes that hold stdout handles open.
 	if isWindows() {
-		_ = proc.Kill()
+		pid := proc.Pid()
+		if err := killProcessTree(pid); err != nil {
+			// Fallback to direct Kill() if taskkill fails
+			_ = proc.Kill()
+		}
 	} else {
 		_ = proc.Signal(syscall.SIGTERM)
 	}
@@ -1343,7 +1371,11 @@ func terminateCommand(cmd commandRunner) *forceKillTimer {
 	done := make(chan struct{}, 1)
 	timer := time.AfterFunc(time.Duration(forceKillDelay.Load())*time.Second, func() {
 		if p := cmd.Process(); p != nil {
-			_ = p.Kill()
+			if isWindows() {
+				_ = killProcessTree(p.Pid())
+			} else {
+				_ = p.Kill()
+			}
 		}
 		close(done)
 	})
@@ -1360,16 +1392,23 @@ func terminateProcess(cmd commandRunner) *time.Timer {
 		return nil
 	}
 
-	// Windows does not support SIGTERM - use Kill() directly
+	// Windows does not support SIGTERM - use taskkill /T to kill process tree
 	if isWindows() {
-		_ = proc.Kill()
+		pid := proc.Pid()
+		if err := killProcessTree(pid); err != nil {
+			_ = proc.Kill()
+		}
 	} else {
 		_ = proc.Signal(syscall.SIGTERM)
 	}
 
 	return time.AfterFunc(time.Duration(forceKillDelay.Load())*time.Second, func() {
 		if p := cmd.Process(); p != nil {
-			_ = p.Kill()
+			if isWindows() {
+				_ = killProcessTree(p.Pid())
+			} else {
+				_ = p.Kill()
+			}
 		}
 	})
 }
