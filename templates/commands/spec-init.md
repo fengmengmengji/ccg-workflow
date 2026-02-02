@@ -55,13 +55,14 @@ description: '初始化 OpenSpec (OPSX) 环境 + 验证多模型 MCP 工具'
 
 4. **Validate Multi-Model MCP Tools**
    - Check `codeagent-wrapper` availability: `~/.claude/bin/codeagent-wrapper --version`
+   - **工作目录**：`{{WORKDIR}}` 替换为目标工作目录的绝对路径。如果用户通过 `/add-dir` 添加了多个工作区，先确定任务相关的工作区。
    - Test Codex backend:
      ```bash
-     ~/.claude/bin/codeagent-wrapper --backend codex - "$PWD" <<< "echo test"
+     ~/.claude/bin/codeagent-wrapper --backend codex - "{{WORKDIR}}" <<< "echo test"
      ```
    - Test Gemini backend:
      ```bash
-     ~/.claude/bin/codeagent-wrapper --backend gemini --gemini-model gemini-3-pro-preview - "$PWD" <<< "echo test"
+     ~/.claude/bin/codeagent-wrapper --backend gemini --gemini-model gemini-3-pro-preview - "{{WORKDIR}}" <<< "echo test"
      ```
    - For each unavailable tool, display warning with installation instructions.
 

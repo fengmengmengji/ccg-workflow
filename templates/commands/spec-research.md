@@ -24,7 +24,7 @@ description: '需求 → 约束集（并行探索 + OPSX 提案）'
    mcp__ace-tool__enhance_prompt({
      prompt: "$ARGUMENTS",
      conversation_history: "<recent conversation>",
-     project_root_path: "$PWD"
+     project_root_path: "{{WORKDIR}}"
    })
    ```
    - Wait for enhanced prompt result.

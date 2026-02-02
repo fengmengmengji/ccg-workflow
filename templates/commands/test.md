@@ -29,11 +29,17 @@ description: '多模型测试生成：智能路由 Codex 后端测试 / Gemini �
 
 ## 多模型调用规范
 
+**工作目录**：
+- `{{WORKDIR}}`：替换为目标工作目录的**绝对路径**
+- 如果用户通过 `/add-dir` 添加了多个工作区，先用 Glob/Grep 确定任务相关的工作区
+- 如果无法确定，用 `AskUserQuestion` 询问用户选择目标工作区
+- 默认使用当前工作目录
+
 **调用语法**（并行用 `run_in_background: true`）：
 
 ```
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend <codex|gemini> {{GEMINI_MODEL_FLAG}}- \"$PWD\" <<'EOF'
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend <codex|gemini> {{GEMINI_MODEL_FLAG}}- \"{{WORKDIR}}\" <<'EOF'
 ROLE_FILE: <角色提示词路径>
 <TASK>
 需求：为以下代码生成测试

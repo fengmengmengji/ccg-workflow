@@ -49,7 +49,7 @@ Task({
 ```
 Task({
   subagent_type: "init-architect",
-  prompt: "扫描项目并生成 CLAUDE.md 文档。\n\n项目摘要：$ARGUMENTS\n当前时间戳：$TIMESTAMP\n工作目录：$PWD\n\n请执行：\n1. 阶段 A：全仓清点（文件统计、模块识别）\n2. 阶段 B：模块优先扫描（入口、接口、依赖、测试）\n3. 阶段 C：深度补捞（按需）\n4. 阶段 D：生成文档（根级 + 模块级 CLAUDE.md）\n\n输出覆盖率报告与推荐下一步。",
+  prompt: "扫描项目并生成 CLAUDE.md 文档。\n\n项目摘要：$ARGUMENTS\n当前时间戳：$TIMESTAMP\n工作目录：{{WORKDIR}}\n\n请执行：\n1. 阶段 A：全仓清点（文件统计、模块识别）\n2. 阶段 B：模块优先扫描（入口、接口、依赖、测试）\n3. 阶段 C：深度补捞（按需）\n4. 阶段 D：生成文档（根级 + 模块级 CLAUDE.md）\n\n输出覆盖率报告与推荐下一步。",
   description: "初始化项目文档"
 })
 ```

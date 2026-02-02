@@ -23,13 +23,14 @@ description: '多模型分析 → 消除歧义 → 零决策可执行计划'
 2. **Multi-Model Implementation Analysis (PARALLEL)**
    - **CRITICAL**: You MUST launch BOTH Codex AND Gemini in a SINGLE message with TWO Bash tool calls.
    - **DO NOT** call one model first and wait. Launch BOTH simultaneously with `run_in_background: true`.
+   - **工作目录**：`{{WORKDIR}}` 替换为目标工作目录的绝对路径。如果用户通过 `/add-dir` 添加了多个工作区，先确定任务相关的工作区。
 
    **Step 2.1**: In ONE message, make TWO parallel Bash calls:
 
    **FIRST Bash call (Codex)**:
    ```
    Bash({
-     command: "~/.claude/bin/codeagent-wrapper --backend codex - \"$PWD\" <<'EOF'\nAnalyze change <change_id> from backend perspective:\n- Implementation approach\n- Technical risks\n- Alternative architectures\n- Edge cases and failure modes\nOUTPUT: JSON with analysis\nEOF",
+     command: "~/.claude/bin/codeagent-wrapper --backend codex - \"{{WORKDIR}}\" <<'EOF'\nAnalyze change <change_id> from backend perspective:\n- Implementation approach\n- Technical risks\n- Alternative architectures\n- Edge cases and failure modes\nOUTPUT: JSON with analysis\nEOF",
      run_in_background: true,
      timeout: 300000,
      description: "Codex: backend analysis"
@@ -39,7 +40,7 @@ description: '多模型分析 → 消除歧义 → 零决策可执行计划'
    **SECOND Bash call (Gemini) - IN THE SAME MESSAGE**:
    ```
    Bash({
-     command: "~/.claude/bin/codeagent-wrapper --backend gemini --gemini-model gemini-3-pro-preview - \"$PWD\" <<'EOF'\nAnalyze change <change_id> from frontend/integration perspective:\n- Maintainability assessment\n- Scalability considerations\n- Integration conflicts\nOUTPUT: JSON with analysis\nEOF",
+     command: "~/.claude/bin/codeagent-wrapper --backend gemini --gemini-model gemini-3-pro-preview - \"{{WORKDIR}}\" <<'EOF'\nAnalyze change <change_id> from frontend/integration perspective:\n- Maintainability assessment\n- Scalability considerations\n- Integration conflicts\nOUTPUT: JSON with analysis\nEOF",
      run_in_background: true,
      timeout: 300000,
      description: "Gemini: frontend analysis"

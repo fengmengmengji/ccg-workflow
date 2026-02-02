@@ -33,9 +33,11 @@ description: '按规范执行 + 多模型协作 + 归档'
    - **Route A: Gemini** — Frontend/UI/styling (CSS, React, Vue, HTML, components)
    - **Route B: Codex** — Backend/logic/algorithm (API, data processing, business logic)
 
+   **工作目录**：`{{WORKDIR}}` 替换为目标工作目录的绝对路径。如果用户通过 `/add-dir` 添加了多个工作区，先确定任务相关的工作区。
+
    For each task:
    ```
-   codeagent-wrapper --backend <codex|gemini> --gemini-model gemini-3-pro-preview - "$PWD" <<'EOF'
+   codeagent-wrapper --backend <codex|gemini> --gemini-model gemini-3-pro-preview - "{{WORKDIR}}" <<'EOF'
    TASK: <task description from tasks.md>
    CONTEXT: <relevant code context>
    CONSTRAINTS: <constraints from spec>
@@ -71,7 +73,7 @@ description: '按规范执行 + 多模型协作 + 归档'
    **FIRST Bash call (Codex)**:
    ```
    Bash({
-     command: "~/.claude/bin/codeagent-wrapper --backend codex - \"$PWD\" <<'EOF'\nReview the implementation changes:\n- Correctness: logic errors, edge cases\n- Security: injection, auth issues\n- Spec compliance: constraints satisfied\nOUTPUT: JSON with findings\nEOF",
+     command: "~/.claude/bin/codeagent-wrapper --backend codex - \"{{WORKDIR}}\" <<'EOF'\nReview the implementation changes:\n- Correctness: logic errors, edge cases\n- Security: injection, auth issues\n- Spec compliance: constraints satisfied\nOUTPUT: JSON with findings\nEOF",
      run_in_background: true,
      timeout: 300000,
      description: "Codex: correctness/security review"
@@ -81,7 +83,7 @@ description: '按规范执行 + 多模型协作 + 归档'
    **SECOND Bash call (Gemini) - IN THE SAME MESSAGE**:
    ```
    Bash({
-     command: "~/.claude/bin/codeagent-wrapper --backend gemini --gemini-model gemini-3-pro-preview - \"$PWD\" <<'EOF'\nReview the implementation changes:\n- Maintainability: readability, complexity\n- Patterns: consistency with project style\n- Integration: cross-module impacts\nOUTPUT: JSON with findings\nEOF",
+     command: "~/.claude/bin/codeagent-wrapper --backend gemini --gemini-model gemini-3-pro-preview - \"{{WORKDIR}}\" <<'EOF'\nReview the implementation changes:\n- Maintainability: readability, complexity\n- Patterns: consistency with project style\n- Integration: cross-module impacts\nOUTPUT: JSON with findings\nEOF",
      run_in_background: true,
      timeout: 300000,
      description: "Gemini: maintainability/patterns review"
