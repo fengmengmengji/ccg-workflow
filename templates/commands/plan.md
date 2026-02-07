@@ -79,10 +79,10 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 #### 1.1 Prompt 增强（必须首先执行）
 
-**⚠️ 必须调用 `mcp__ace-tool__enhance_prompt` 工具**：
+**⚠️ 必须调用 `{{MCP_ENHANCE_TOOL}}` 工具**：
 
 ```
-mcp__ace-tool__enhance_prompt({
+{{MCP_ENHANCE_TOOL}}({
   prompt: "$ARGUMENTS",
   conversation_history: "<最近5-10轮对话历史>",
   project_root_path: "{{WORKDIR}}"
@@ -93,10 +93,10 @@ mcp__ace-tool__enhance_prompt({
 
 #### 1.2 上下文检索
 
-**调用 `mcp__ace-tool__search_context` 工具**：
+**调用 `{{MCP_SEARCH_TOOL}}` 工具**：
 
 ```
-mcp__ace-tool__search_context({
+{{MCP_SEARCH_TOOL}}({
   query: "<基于增强后需求构建的语义查询>",
   project_root_path: "{{WORKDIR}}"
 })

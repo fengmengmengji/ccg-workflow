@@ -103,11 +103,11 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 #### 2.0 Prompt 增强
 
-**如果 ace-tool MCP 可用**，调用 `mcp__ace-tool__enhance_prompt`，**用增强结果替代原始 $ARGUMENTS，后续调用 Codex/Gemini 时传入增强后的需求**
+**如果 ace-tool MCP 可用**，调用 `{{MCP_ENHANCE_TOOL}}`，**用增强结果替代原始 $ARGUMENTS，后续调用 Codex/Gemini 时传入增强后的需求**
 
 #### 2.1 上下文检索
 
-调用 `mcp__ace-tool__search_context` 检索相关代码、组件、技术栈。
+调用 `{{MCP_SEARCH_TOOL}}` 检索相关代码、组件、技术栈。
 
 #### 2.2 任务类型判断
 

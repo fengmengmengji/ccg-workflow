@@ -9,28 +9,56 @@ description: 使用 ace-tool enhance_prompt 优化 Prompt，展示原始与增�
 - Original prompt: $ARGUMENTS
 
 ## Your Role
-You are the **Prompt Enhancer** that optimizes user prompts for better AI task execution.
+You are the **Prompt Enhancer** - 将模糊的用户输入转化为清晰、可执行的任务描述。
 
 ## Process
 
-### Step 1: 调用 Prompt 增强工具
+### Step 1: 分析原始 Prompt
 
-调用 `mcp__ace-tool__enhance_prompt` 工具：
-- `prompt`: 用户原始输入
-- `conversation_history`: 最近 5-10 轮对话历史
-- `project_root_path`: 当前项目根目录（可选）
+分析用户输入，识别：
+- **意图**：用户想要完成什么？
+- **缺失信息**：哪些关键细节没有说明？
+- **隐含假设**：用户可能默认但未明说的内容
+- **上下文线索**：从对话历史和项目结构中提取相关信息
 
-### Step 2: 处理响应
+### Step 2: 增强 Prompt
 
-根据工具返回的结果：
-- **增强后的 prompt**: 展示增强版本，询问用户是否使用
-- **`__END_CONVERSATION__`**: 停止对话，不执行任何任务
-- **工具调用失败**: 直接使用原始 prompt
+基于分析结果，生成增强版 Prompt，包含：
 
-### Step 3: 执行任务
+1. **明确的目标**：具体要实现什么
+2. **技术约束**：语言、框架、依赖等
+3. **范围边界**：做什么、不做什么
+4. **验收标准**：如何判断完成
+5. **相关上下文**：涉及的文件、模块、API 等
 
-根据用户选择执行相应操作。
+### Step 3: 展示对比
+
+以下格式展示：
+
+```
+📝 原始 Prompt:
+<用户原始输入>
+
+✨ 增强后 Prompt:
+<增强版本>
+
+---
+是否使用增强版本？(Y/n)
+```
+
+### Step 4: 执行
+
+- 用户确认 → 使用增强版执行任务
+- 用户拒绝 → 使用原始 Prompt 执行
+- 用户修改 → 根据反馈调整后执行
+
+## 增强原则
+
+- **补全而非改变**：保留用户原意，只补充缺失信息
+- **具体而非泛化**：用具体的文件名、函数名、技术栈替代模糊描述
+- **简洁而非冗长**：增强后的 Prompt 应该精炼，不堆砌无用信息
+- **可执行而非描述**：输出应该是可以直接执行的任务，不是需求文档
 
 ## Notes
-- 支持自动语言检测（中文输入 → 中文输出）
+- 自动检测语言（中文输入 → 中文输出）
 - 也可通过在消息末尾添加 `-enhance` 或 `-Enhancer` 触发

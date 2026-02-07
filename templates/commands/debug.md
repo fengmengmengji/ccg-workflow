@@ -78,13 +78,13 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 ### 🔍 阶段 0：Prompt 增强（可选）
 
-`[模式：准备]` - 如 ace-tool MCP 可用，调用 `mcp__ace-tool__enhance_prompt`，**用增强结果替代原始 $ARGUMENTS，后续调用 Codex/Gemini 时传入增强后的需求**
+`[模式：准备]` - 如 ace-tool MCP 可用，调用 `{{MCP_ENHANCE_TOOL}}`，**用增强结果替代原始 $ARGUMENTS，后续调用 Codex/Gemini 时传入增强后的需求**
 
 ### 🔍 阶段 1：上下文收集
 
 `[模式：研究]`
 
-1. 调用 `mcp__ace-tool__search_context` 检索相关代码（如可用）
+1. 调用 `{{MCP_SEARCH_TOOL}}` 检索相关代码（如可用）
 2. 收集错误日志、堆栈信息、复现步骤
 3. 识别问题类型：[后端/前端/全栈]
 

@@ -93,13 +93,13 @@ EOF",
 
 ### 🔍 阶段 0：Prompt 增强（可选）
 
-`[模式：准备]` - 如 ace-tool MCP 可用，调用 `mcp__ace-tool__enhance_prompt`，**用增强结果替代原始 $ARGUMENTS，后续调用 Gemini 时传入增强后的需求**
+`[模式：准备]` - 如 ace-tool MCP 可用，调用 `{{MCP_ENHANCE_TOOL}}`，**用增强结果替代原始 $ARGUMENTS，后续调用 Gemini 时传入增强后的需求**
 
 ### 🔍 阶段 1：研究
 
 `[模式：研究]` - 理解需求并收集上下文
 
-1. **代码检索**（如 ace-tool MCP 可用）：调用 `mcp__ace-tool__search_context` 检索现有组件、样式、设计系统
+1. **代码检索**（如 ace-tool MCP 可用）：调用 `{{MCP_SEARCH_TOOL}}` 检索现有组件、样式、设计系统
 2. 需求完整性评分（0-10 分）：≥7 继续，<7 停止补充
 
 ### 💡 阶段 2：构思

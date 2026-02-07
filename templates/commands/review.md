@@ -78,7 +78,7 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 **有参数时**：使用指定的代码/描述
 
-调用 `mcp__ace-tool__search_context` 获取相关上下文。
+调用 `{{MCP_SEARCH_TOOL}}` 获取相关上下文。
 
 ### 🔬 阶段 2：并行审查
 

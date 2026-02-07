@@ -343,6 +343,7 @@ function injectConfigVariables(content: string, config: {
     review?: { models?: string[] }
   }
   liteMode?: boolean
+  mcpProvider?: string
 }): string {
   let processed = content
 
@@ -373,6 +374,21 @@ function injectConfigVariables(content: string, config: {
   // If liteMode is true, inject "--lite" flag
   const liteModeFlag = config.liteMode ? '--lite ' : ''
   processed = processed.replace(/\{\{LITE_MODE_FLAG\}\}/g, liteModeFlag)
+
+  // MCP tool injection based on provider
+  const mcpProvider = config.mcpProvider || 'ace-tool'
+  if (mcpProvider === 'contextweaver') {
+    // ContextWeaver MCP tools
+    processed = processed.replace(/\{\{MCP_SEARCH_TOOL\}\}/g, 'mcp__contextweaver__codebase-retrieval')
+    processed = processed.replace(/\{\{MCP_SEARCH_PARAM\}\}/g, 'information_request')
+    processed = processed.replace(/\{\{MCP_ENHANCE_TOOL\}\}/g, '') // ContextWeaver 没有 enhance 功能
+  }
+  else {
+    // ace-tool / ace-tool-rs MCP tools (default)
+    processed = processed.replace(/\{\{MCP_SEARCH_TOOL\}\}/g, 'mcp__ace-tool__search_context')
+    processed = processed.replace(/\{\{MCP_SEARCH_PARAM\}\}/g, 'query')
+    processed = processed.replace(/\{\{MCP_ENHANCE_TOOL\}\}/g, 'mcp__ace-tool__enhance_prompt')
+  }
 
   return processed
 }
@@ -467,6 +483,7 @@ export async function installWorkflows(
       review?: { models?: string[] }
     }
     liteMode?: boolean
+    mcpProvider?: string
   },
 ): Promise<InstallResult> {
   // Default config
@@ -478,6 +495,7 @@ export async function installWorkflows(
       review: { models: ['codex', 'gemini'] },
     },
     liteMode: config?.liteMode || false,
+    mcpProvider: config?.mcpProvider || 'ace-tool',
   }
   const result: InstallResult = {
     success: true,
@@ -1000,5 +1018,188 @@ export async function installAceToolRs(config: AceToolConfig): Promise<{ success
       success: false,
       message: `Failed to configure ace-tool-rs: ${error}`,
     }
+  }
+}
+
+/**
+ * ContextWeaver MCP configuration
+ */
+export interface ContextWeaverConfig {
+  siliconflowApiKey: string
+}
+
+/**
+ * Install and configure ContextWeaver MCP for Claude Code
+ * ContextWeaver is a local-first semantic code search engine with hybrid search + rerank
+ */
+export async function installContextWeaver(config: ContextWeaverConfig): Promise<{ success: boolean, message: string, configPath?: string }> {
+  const { siliconflowApiKey } = config
+
+  try {
+    // 0. Install contextweaver CLI globally
+    console.log('  ⏳ 正在安装 ContextWeaver CLI...')
+    const { execSync } = await import('node:child_process')
+    try {
+      execSync('npm install -g @hsingjui/contextweaver', { stdio: 'pipe' })
+      console.log('  ✓ ContextWeaver CLI 安装成功')
+    }
+    catch {
+      // Try with sudo on Unix systems
+      if (process.platform !== 'win32') {
+        try {
+          execSync('sudo npm install -g @hsingjui/contextweaver', { stdio: 'pipe' })
+          console.log('  ✓ ContextWeaver CLI 安装成功 (sudo)')
+        }
+        catch {
+          console.log('  ⚠ ContextWeaver CLI 安装失败，请手动运行: npm install -g @hsingjui/contextweaver')
+        }
+      }
+      else {
+        console.log('  ⚠ ContextWeaver CLI 安装失败，请手动运行: npm install -g @hsingjui/contextweaver')
+      }
+    }
+
+    // 1. Create ContextWeaver config directory and .env file
+    const contextWeaverDir = join(homedir(), '.contextweaver')
+    await fs.ensureDir(contextWeaverDir)
+
+    const envContent = `# ContextWeaver 配置 (由 CCG 自动生成)
+
+# Embedding API - 硅基流动
+EMBEDDINGS_API_KEY=${siliconflowApiKey}
+EMBEDDINGS_BASE_URL=https://api.siliconflow.cn/v1/embeddings
+EMBEDDINGS_MODEL=Qwen/Qwen3-Embedding-8B
+EMBEDDINGS_MAX_CONCURRENCY=10
+EMBEDDINGS_DIMENSIONS=1024
+
+# Reranker - 硅基流动
+RERANK_API_KEY=${siliconflowApiKey}
+RERANK_BASE_URL=https://api.siliconflow.cn/v1/rerank
+RERANK_MODEL=Qwen/Qwen3-Reranker-8B
+RERANK_TOP_N=20
+`
+    await fs.writeFile(join(contextWeaverDir, '.env'), envContent, 'utf-8')
+
+    // 2. Read existing Claude Code config
+    let existingConfig = await readClaudeCodeConfig()
+    if (!existingConfig) {
+      existingConfig = { mcpServers: {} }
+    }
+
+    // Backup before modifying
+    if (existingConfig.mcpServers && Object.keys(existingConfig.mcpServers).length > 0) {
+      const backupPath = await backupClaudeCodeConfig()
+      if (backupPath) {
+        console.log(`  ✓ Backup created: ${backupPath}`)
+      }
+    }
+
+    // 3. Build ContextWeaver MCP server config
+    const contextWeaverMcpConfig = buildMcpServerConfig({
+      type: 'stdio' as const,
+      command: 'contextweaver',
+      args: ['mcp'],
+    })
+
+    // 4. Merge into existing config
+    let mergedConfig = mergeMcpServers(existingConfig, {
+      contextweaver: contextWeaverMcpConfig,
+    })
+
+    // Apply Windows fixes if needed
+    if (isWindows()) {
+      mergedConfig = fixWindowsMcpConfig(mergedConfig)
+    }
+
+    // 5. Write config back
+    await writeClaudeCodeConfig(mergedConfig)
+
+    return {
+      success: true,
+      message: 'ContextWeaver MCP configured successfully',
+      configPath: join(homedir(), '.claude.json'),
+    }
+  }
+  catch (error) {
+    return {
+      success: false,
+      message: `Failed to configure ContextWeaver: ${error}`,
+    }
+  }
+}
+
+/**
+ * Uninstall ContextWeaver MCP from Claude Code
+ */
+export async function uninstallContextWeaver(): Promise<{ success: boolean, message: string }> {
+  try {
+    // 1. Remove from claude.json
+    const existingConfig = await readClaudeCodeConfig()
+    if (existingConfig?.mcpServers?.contextweaver) {
+      delete existingConfig.mcpServers.contextweaver
+      await writeClaudeCodeConfig(existingConfig)
+    }
+
+    // 2. Optionally remove ~/.contextweaver directory (keep it for now, user might want to keep config)
+    // const contextWeaverDir = join(homedir(), '.contextweaver')
+    // await fs.remove(contextWeaverDir)
+
+    return {
+      success: true,
+      message: 'ContextWeaver MCP uninstalled successfully',
+    }
+  }
+  catch (error) {
+    return {
+      success: false,
+      message: `Failed to uninstall ContextWeaver: ${error}`,
+    }
+  }
+}
+
+/**
+ * Install a generic MCP server to Claude Code
+ */
+export async function installMcpServer(
+  id: string,
+  command: string,
+  args: string[],
+  env: Record<string, string> = {},
+): Promise<{ success: boolean, message: string }> {
+  try {
+    await backupClaudeCodeConfig()
+    const existingConfig = await readClaudeCodeConfig()
+
+    const serverConfig = buildMcpServerConfig({ type: 'stdio', command, args, env })
+
+    let mergedConfig = mergeMcpServers(existingConfig, { [id]: serverConfig })
+    if (isWindows()) {
+      mergedConfig = fixWindowsMcpConfig(mergedConfig)
+    }
+
+    await writeClaudeCodeConfig(mergedConfig)
+
+    return { success: true, message: `${id} MCP installed successfully` }
+  }
+  catch (error) {
+    return { success: false, message: `Failed to install ${id}: ${error}` }
+  }
+}
+
+/**
+ * Uninstall a generic MCP server from Claude Code
+ */
+export async function uninstallMcpServer(id: string): Promise<{ success: boolean, message: string }> {
+  try {
+    const existingConfig = await readClaudeCodeConfig()
+    if (existingConfig?.mcpServers?.[id]) {
+      delete existingConfig.mcpServers[id]
+      await writeClaudeCodeConfig(existingConfig)
+    }
+
+    return { success: true, message: `${id} MCP uninstalled successfully` }
+  }
+  catch (error) {
+    return { success: false, message: `Failed to uninstall ${id}: ${error}` }
   }
 }

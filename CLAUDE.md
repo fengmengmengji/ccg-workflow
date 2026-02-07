@@ -2,13 +2,19 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-01-26 (v1.7.52)
+**Last Updated**: 2026-02-08 (v1.7.57)
 
 ---
 
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-02-08 (v1.7.57)
+- ✨ **MCP 工具扩展**：新增 ContextWeaver（推荐）+ 辅助工具（Context7/Playwright/DeepWiki/Exa）
+- ✨ **API 配置**：初始化和菜单新增 API 配置，自动添加优化配置和权限白名单
+- ✨ **实用工具**：新增 ccusage（用量分析）+ CCometixLine（状态栏）
+- ✨ **Claude Code 安装**：支持 npm/homebrew/curl/powershell/cmd 多种方式
 
 ### 2026-01-26 (v1.7.52)
 - 🚀 **OpenSpec 升级**：迁移到 OPSX 架构，废弃 `/openspec:xxx`，启用 `/opsx:xxx`
@@ -17,20 +23,10 @@
 
 ### 2026-01-25 (v1.7.51)
 - 🌏 **修复默认语言为英文的问题**：将 CLI 所有命令描述从硬编码英文改为中文
-- 🐛 **修复 `cli-setup.ts`**：所有命令注册时的描述文本改为中文
-- 🐛 **修复 `menu.ts`**：退出提示从 "Goodbye!" 改为 "再见！"
-- ✅ **默认语言**：确保 npm 包安装后默认显示为中文
 
 ### 2026-01-21 (v1.7.47)
-- 🐛 **修复 `gemini/architect.md` 缺失**：新增前端架构师角色提示词，修复会话复用失败问题 (exit code 42)
-- 📝 **环境变量配置说明**：VSCode 插件用户需在 `~/.claude/settings.json` 配置 API 密钥
+- 🐛 **修复 `gemini/architect.md` 缺失**：新增前端架构师角色提示词
 - ✅ **专家提示词数量**：12 → 13 个（Codex 6 + Gemini 7）
-
-### 2026-01-16 (v1.7.39)
-- ✨ **新增 `/ccg:plan` 命令**：多模型协作规划（Phase 1-2），生成 Step-by-step 实施计划
-- ✨ **新增 `/ccg:execute` 命令**：多模型协作执行（Phase 3-5），根据计划获取原型并实施
-- 🐛 **修复 `/ccg:init` 不调用子智能体**：添加明确的 Task 工具调用格式
-- 📝 **命令总数**：14 → 16 个
 
 ---
 
@@ -42,7 +38,7 @@
 2. **16 个斜杠命令**：开发工作流 + Git 工具 + 项目管理
 3. **13 个专家提示词**：Codex 6 个 + Gemini 7 个
 4. **跨平台 CLI 工具**：一键安装（支持 macOS、Linux、Windows）
-5. **MCP 集成**：ace-tool 可选配置（代码检索 + Prompt 增强）
+5. **MCP 集成**：ContextWeaver（推荐）/ ace-tool（收费）+ 辅助工具
 
 ---
 

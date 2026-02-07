@@ -7,7 +7,7 @@ import { homedir } from 'node:os'
 import { join } from 'pathe'
 import { i18n } from '../i18n'
 import { createDefaultConfig, ensureCcgDir, getCcgDir, readCcgConfig, writeCcgConfig } from '../utils/config'
-import { getAllCommandIds, installAceTool, installAceToolRs, installWorkflows } from '../utils/installer'
+import { getAllCommandIds, installAceTool, installAceToolRs, installContextWeaver, installWorkflows } from '../utils/installer'
 import { migrateToV1_4_0, needsMigration } from '../utils/migration'
 
 export async function init(options: InitOptions = {}): Promise<void> {
@@ -30,6 +30,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
   let mcpProvider = 'ace-tool'
   let aceToolBaseUrl = ''
   let aceToolToken = ''
+  let contextWeaverApiKey = ''
 
   // Skip MCP configuration if --skip-mcp is passed (used during update)
   if (options.skipMcp) {
@@ -37,28 +38,32 @@ export async function init(options: InitOptions = {}): Promise<void> {
   }
   else if (!options.skipPrompt) {
     console.log()
-    console.log(ansis.cyan.bold(`  🔧 MCP 工具配置`))
+    console.log(ansis.cyan.bold(`  🔧 MCP 代码检索工具配置`))
     console.log()
 
     const { selectedMcp } = await inquirer.prompt([{
       type: 'list',
       name: 'selectedMcp',
-      message: '选择 MCP 工具',
+      message: '选择代码检索 MCP 工具',
       choices: [
         {
-          name: `ace-tool ${ansis.gray('(Node.js 实现) - 一键安装，含 Prompt 增强 + 代码检索')}`,
+          name: `contextweaver ${ansis.green('(推荐)')} ${ansis.gray('- 本地向量库，混合搜索 + Rerank')}`,
+          value: 'contextweaver',
+        },
+        {
+          name: `ace-tool ${ansis.red('(收费)')} ${ansis.gray('(Node.js) - Augment 官方')}`,
           value: 'ace-tool',
         },
         {
-          name: `ace-tool-rs ${ansis.green('(推荐)')} ${ansis.gray('(Rust 实现) - 更轻量、更快速')}`,
+          name: `ace-tool-rs ${ansis.red('(收费)')} ${ansis.gray('(Rust) - 更轻量')}`,
           value: 'ace-tool-rs',
         },
         {
-          name: `跳过 ${ansis.gray('- 稍后手动配置（可选 auggie 等其他 MCP）')}`,
+          name: `跳过 ${ansis.gray('- 稍后手动配置')}`,
           value: 'skip',
         },
       ],
-      default: 'ace-tool-rs',
+      default: 'contextweaver',
     }])
 
     mcpProvider = selectedMcp
@@ -118,11 +123,89 @@ export async function init(options: InitOptions = {}): Promise<void> {
         console.log()
       }
     }
+    // Configure ContextWeaver if selected
+    else if (selectedMcp === 'contextweaver') {
+      console.log()
+      console.log(ansis.cyan.bold(`  🔧 ContextWeaver MCP 配置`))
+      console.log(ansis.gray(`     本地语义代码检索引擎，混合搜索 + Rerank`))
+      console.log()
+
+      const { skipKey } = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'skipKey',
+        message: '是否跳过 API Key 配置？（可稍后运行 npx ccg config mcp 配置）',
+        default: false,
+      }])
+
+      if (!skipKey) {
+        console.log()
+        console.log(ansis.cyan(`     📖 获取硅基流动 API Key：`))
+        console.log()
+        console.log(`     ${ansis.gray('1.')} 访问 ${ansis.underline('https://siliconflow.cn/')} 注册账号`)
+        console.log(`     ${ansis.gray('2.')} 进入控制台 → API 密钥 → 创建密钥`)
+        console.log(`     ${ansis.gray('3.')} 新用户有免费额度，Embedding + Rerank 完全够用`)
+        console.log()
+
+        const cwAnswers = await inquirer.prompt([{
+          type: 'password',
+          name: 'apiKey',
+          message: `硅基流动 API Key ${ansis.gray('(sk-xxx)')}`,
+          mask: '*',
+          validate: (input: string) => input.trim() !== '' || '请输入 API Key',
+        }])
+        contextWeaverApiKey = cwAnswers.apiKey || ''
+      }
+      else {
+        console.log()
+        console.log(ansis.yellow(`  ℹ️  已跳过 API Key 配置`))
+        console.log(ansis.gray(`     • ContextWeaver MCP 将不会自动安装`))
+        console.log(ansis.gray(`     • 可稍后运行 ${ansis.cyan('npx ccg config mcp')} 配置`))
+        console.log(ansis.gray(`     • 获取 Key: ${ansis.cyan('https://siliconflow.cn/')}`))
+        console.log()
+      }
+    }
     else {
       console.log()
       console.log(ansis.yellow(`  ℹ️  已跳过 MCP 配置`))
       console.log(ansis.gray(`     • 可稍后手动配置任何 MCP 服务`))
       console.log()
+    }
+  }
+
+  // Claude Code API configuration
+  let apiUrl = ''
+  let apiKey = ''
+
+  if (!options.skipPrompt) {
+    console.log()
+    console.log(ansis.cyan.bold(`  🔑 Claude Code API 配置`))
+    console.log()
+
+    const { configureApi } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'configureApi',
+      message: '是否配置自定义 API？（使用官方账号可跳过）',
+      default: false,
+    }])
+
+    if (configureApi) {
+      const apiAnswers = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'url',
+          message: `API URL ${ansis.gray('(必填)')}`,
+          validate: (v: string) => v.trim() !== '' || '请输入 API URL',
+        },
+        {
+          type: 'password',
+          name: 'key',
+          message: `API Key ${ansis.gray('(必填)')}`,
+          mask: '*',
+          validate: (v: string) => v.trim() !== '' || '请输入 API Key',
+        },
+      ])
+      apiUrl = apiAnswers.url?.trim() || ''
+      apiKey = apiAnswers.key?.trim() || ''
     }
   }
 
@@ -251,6 +334,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
     const result = await installWorkflows(selectedWorkflows, installDir, options.force, {
       routing,
       liteMode,
+      mcpProvider,
     })
 
     // Install ace-tool or ace-tool-rs MCP if token was provided
@@ -273,6 +357,32 @@ export async function init(options: InitOptions = {}): Promise<void> {
         console.log(ansis.gray(`      ${aceResult.message}`))
       }
     }
+    // Install ContextWeaver MCP if API key was provided
+    else if (mcpProvider === 'contextweaver' && contextWeaverApiKey) {
+      spinner.text = '正在配置 ContextWeaver MCP...'
+      const cwResult = await installContextWeaver({
+        siliconflowApiKey: contextWeaverApiKey,
+      })
+      if (cwResult.success) {
+        spinner.succeed(ansis.green(i18n.t('init:installSuccess')))
+        console.log()
+        console.log(`    ${ansis.green('✓')} ContextWeaver MCP ${ansis.gray(`→ ${cwResult.configPath}`)}`)
+        console.log(`    ${ansis.green('✓')} 配置文件 ${ansis.gray('→ ~/.contextweaver/.env')}`)
+        console.log()
+        console.log(ansis.cyan(`    📖 首次使用需要索引代码库：`))
+        console.log(ansis.gray(`       cd your-project && cw index`))
+      }
+      else {
+        spinner.warn(ansis.yellow('ContextWeaver MCP 配置失败'))
+        console.log(ansis.gray(`      ${cwResult.message}`))
+      }
+    }
+    else if (mcpProvider === 'contextweaver' && !contextWeaverApiKey) {
+      spinner.succeed(ansis.green(i18n.t('init:installSuccess')))
+      console.log()
+      console.log(`    ${ansis.yellow('⚠')} ContextWeaver MCP 未安装 ${ansis.gray('(API Key 未提供)')}`)
+      console.log(`    ${ansis.gray('→')} 稍后运行 ${ansis.cyan('npx ccg config mcp')} 完成配置`)
+    }
     else if ((mcpProvider === 'ace-tool' || mcpProvider === 'ace-tool-rs') && !aceToolToken) {
       const toolName = mcpProvider === 'ace-tool-rs' ? 'ace-tool-rs' : 'ace-tool'
       spinner.succeed(ansis.green(i18n.t('init:installSuccess')))
@@ -282,6 +392,42 @@ export async function init(options: InitOptions = {}): Promise<void> {
     }
     else {
       spinner.succeed(ansis.green(i18n.t('init:installSuccess')))
+    }
+
+    // Save API configuration if provided
+    if (apiUrl && apiKey) {
+      const settingsPath = join(installDir, 'settings.json')
+      let settings: Record<string, any> = {}
+      if (await fs.pathExists(settingsPath)) {
+        settings = await fs.readJSON(settingsPath)
+      }
+      if (!settings.env)
+        settings.env = {}
+      settings.env.ANTHROPIC_BASE_URL = apiUrl
+      settings.env.ANTHROPIC_API_KEY = apiKey
+      delete settings.env.ANTHROPIC_AUTH_TOKEN // 避免冲突
+      // 默认优化配置
+      settings.env.DISABLE_TELEMETRY = '1'
+      settings.env.DISABLE_ERROR_REPORTING = '1'
+      settings.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = '1'
+      settings.env.CLAUDE_CODE_ATTRIBUTION_HEADER = '0'
+      settings.env.MCP_TIMEOUT = '60000'
+      // codeagent-wrapper 权限白名单
+      if (!settings.permissions)
+        settings.permissions = {}
+      if (!settings.permissions.allow)
+        settings.permissions.allow = []
+      const wrapperPerms = [
+        'Bash(~/.claude/bin/codeagent-wrapper --backend gemini*)',
+        'Bash(~/.claude/bin/codeagent-wrapper --backend codex*)',
+      ]
+      for (const perm of wrapperPerms) {
+        if (!settings.permissions.allow.includes(perm))
+          settings.permissions.allow.push(perm)
+      }
+      await fs.writeJSON(settingsPath, settings, { spaces: 2 })
+      console.log()
+      console.log(`    ${ansis.green('✓')} API 配置 ${ansis.gray(`→ ${settingsPath}`)}`)
     }
 
     // Show result summary
@@ -386,17 +532,20 @@ export async function init(options: InitOptions = {}): Promise<void> {
     }
 
     // Show MCP resources if user skipped installation
-    if (mcpProvider === 'skip' || ((mcpProvider === 'ace-tool' || mcpProvider === 'ace-tool-rs') && !aceToolToken)) {
+    if (mcpProvider === 'skip' || ((mcpProvider === 'ace-tool' || mcpProvider === 'ace-tool-rs') && !aceToolToken) || (mcpProvider === 'contextweaver' && !contextWeaverApiKey)) {
       console.log()
       console.log(ansis.cyan.bold(`  📖 MCP 服务选项`))
       console.log()
-      console.log(ansis.gray(`     如需使用代码检索和 Prompt 增强功能，可选择以下 MCP 服务：`))
+      console.log(ansis.gray(`     如需使用代码检索功能，可选择以下 MCP 服务：`))
       console.log()
-      console.log(`     ${ansis.green('1.')} ${ansis.cyan('ace-tool')} ${ansis.gray('(推荐)')}: ${ansis.underline('https://augmentcode.com/')}`)
-      console.log(`        ${ansis.gray('一键安装，含 Prompt 增强 + 代码检索')}`)
+      console.log(`     ${ansis.green('1.')} ${ansis.cyan('ace-tool / ace-tool-rs')}: ${ansis.underline('https://augmentcode.com/')}`)
+      console.log(`        ${ansis.gray('Augment 官方，含 Prompt 增强 + 代码检索')}`)
       console.log()
       console.log(`     ${ansis.green('2.')} ${ansis.cyan('ace-tool 中转服务')} ${ansis.yellow('(无需注册)')}: ${ansis.underline('https://linux.do/t/topic/1291730')}`)
       console.log(`        ${ansis.gray('linux.do 社区提供的免费中转服务')}`)
+      console.log()
+      console.log(`     ${ansis.green('3.')} ${ansis.cyan('ContextWeaver')} ${ansis.yellow('(本地)')}: ${ansis.underline('https://siliconflow.cn/')}`)
+      console.log(`        ${ansis.gray('本地向量库，需要硅基流动 API Key（有免费额度）')}`)
       console.log()
     }
 

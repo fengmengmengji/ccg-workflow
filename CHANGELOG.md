@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.57] - 2026-02-08
+
+### ✨ 新功能
+
+**1. MCP 工具扩展**
+- 新增 ContextWeaver MCP（推荐）- 本地混合搜索，替代收费的 ace-tool
+- 新增辅助工具 MCP（多选）：Context7、Playwright、DeepWiki、Exa
+- ace-tool/ace-tool-rs 标注为收费，ContextWeaver 设为默认推荐
+
+**2. API 配置**
+- 初始化和菜单新增「配置 API」选项
+- 支持自定义 ANTHROPIC_BASE_URL 和 ANTHROPIC_API_KEY
+- 自动添加优化配置（禁用遥测、MCP 超时等）
+- 自动添加 codeagent-wrapper 权限白名单
+
+**3. 实用工具**
+- 新增 ccusage - Claude Code 用量分析
+- 新增 CCometixLine - 状态栏工具（Git + 用量跟踪）
+
+**4. Claude Code 安装**
+- 新增「安装 Claude Code」菜单选项
+- 支持多种安装方式：npm、homebrew、curl、powershell、cmd
+- 支持检测已安装版本并重装
+
+### 🔧 改进
+- MCP 配置菜单重构为两类：代码检索 MCP + 辅助工具 MCP
+- 卸载 CCG 时不再询问 MCP 卸载（独立操作）
+
+---
+
 ## [1.7.56] - 2026-02-01
 
 ### 🐛 重要修复：OpenSpec CLI 集成

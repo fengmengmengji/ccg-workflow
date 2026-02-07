@@ -67,7 +67,7 @@ description: '初始化 OpenSpec (OPSX) 环境 + 验证多模型 MCP 工具'
    - For each unavailable tool, display warning with installation instructions.
 
 5. **Validate Context Retrieval MCP** (Optional)
-   - **Check Active Tool**: Is `mcp__ace-tool__search_context` available in the current session?
+   - **Check Active Tool**: Is `{{MCP_SEARCH_TOOL}}` available in the current session?
    - **Check Configuration**: If tool is missing, check `~/.claude.json` (or `%APPDATA%\Claude\claude.json` on Windows) for `"ace-tool"` or `"ace-tool-rs"` in `mcpServers`.
    - **Diagnosis**:
      - If tool available: Mark as "✓ Active".

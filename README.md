@@ -129,9 +129,37 @@ v1.7.39 新增 `/ccg:plan` 和 `/ccg:execute` 命令，将规划与执行解耦�
 
 ### MCP 配置
 
-ace-tool 用于代码检索和 Prompt 增强，安装时可选配置。
+代码检索 MCP（二选一）：
+- **ContextWeaver**（推荐）- 本地混合搜索，需要硅基流动 API Key（免费）
+- **ace-tool**（收费）- Augment 官方，Token 获取：https://augmentcode.com/
 
-Token 获取：https://augmentcode.com/
+辅助工具 MCP（可选）：
+- **Context7** - 获取最新库文档
+- **Playwright** - 浏览器自动化/测试
+- **DeepWiki** - 知识库查询
+- **Exa** - 搜索引擎（需 API Key）
+
+```bash
+# 配置 MCP
+npx ccg-workflow menu  # 选择「配置 MCP」
+```
+
+## 实用工具
+
+```bash
+npx ccg-workflow menu  # 选择「实用工具」
+```
+
+- **ccusage** - Claude Code 用量分析
+- **CCometixLine** - 状态栏工具（Git + 用量跟踪）
+
+## 安装 Claude Code
+
+```bash
+npx ccg-workflow menu  # 选择「安装 Claude Code」
+```
+
+支持多种安装方式：npm、homebrew、curl、powershell、cmd
 
 ## 更新 / 卸载
 
@@ -187,4 +215,4 @@ MIT
 
 ---
 
-v1.7.52 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues)
+v1.7.57 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues)

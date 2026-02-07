@@ -9,11 +9,11 @@ description: '需求 → 约束集（并行探索 + OPSX 提案）'
 - Strictly adhere to OPSX rules when writing spec-structured documents.
 
 **Guardrails**
-- **STOP! BEFORE ANY OTHER ACTION**: You MUST call `mcp__ace-tool__enhance_prompt` FIRST. This is NON-NEGOTIABLE.
+- **STOP! BEFORE ANY OTHER ACTION**: You MUST call `{{MCP_ENHANCE_TOOL}}` FIRST. This is NON-NEGOTIABLE.
 - **NEVER** divide subagent tasks by roles (e.g., "架构师agent", "安全专家agent").
 - **ALWAYS** divide by context boundaries (e.g., "user-related code", "authentication logic").
 - Each subagent context must be self-contained with independent output.
-- Use `mcp__ace-tool__search_context` to minimize grep/find operations.
+- Use `{{MCP_SEARCH_TOOL}}` to minimize grep/find operations.
 - Do not make architectural decisions—surface constraints that guide decisions.
 
 **Steps**
@@ -21,7 +21,7 @@ description: '需求 → 约束集（并行探索 + OPSX 提案）'
    - **DO THIS IMMEDIATELY. DO NOT SKIP. DO NOT CALL ANY OTHER TOOL FIRST.**
    - Call:
    ```
-   mcp__ace-tool__enhance_prompt({
+   {{MCP_ENHANCE_TOOL}}({
      prompt: "$ARGUMENTS",
      conversation_history: "<recent conversation>",
      project_root_path: "{{WORKDIR}}"
@@ -43,7 +43,7 @@ description: '需求 → 约束集（并行探索 + OPSX 提案）'
    - If change already exists, continue with existing change.
 
 2. **Initial Codebase Assessment**
-   - Use `mcp__ace-tool__search_context` to scan codebase.
+   - Use `{{MCP_SEARCH_TOOL}}` to scan codebase.
    - Determine project scale: single vs multi-directory structure.
    - **Decision**: If multi-directory → enable parallel Explore subagents.
 

@@ -146,10 +146,10 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 **⚠️ 必须使用 MCP 工具快速检索上下文，禁止手动逐个读取文件**
 
-根据计划中的"关键文件"列表，调用 `mcp__ace-tool__search_context` 检索相关代码：
+根据计划中的"关键文件"列表，调用 `{{MCP_SEARCH_TOOL}}` 检索相关代码：
 
 ```
-mcp__ace-tool__search_context({
+{{MCP_SEARCH_TOOL}}({
   query: "<基于计划内容构建的语义查询，包含关键文件、模块、函数名>",
   project_root_path: "{{WORKDIR}}"
 })

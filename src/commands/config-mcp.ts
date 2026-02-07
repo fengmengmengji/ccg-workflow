@@ -1,12 +1,10 @@
 import ansis from 'ansis'
 import inquirer from 'inquirer'
 import { i18n } from '../i18n'
-import { installAceTool, installAceToolRs, uninstallAceTool } from '../utils/installer'
+import { installAceTool, installAceToolRs, installContextWeaver, installMcpServer, uninstallAceTool, uninstallContextWeaver, uninstallMcpServer } from '../utils/installer'
 
 /**
- * Configure ace-tool or ace-tool-rs MCP after installation
- *
- * This command allows users to configure ace-tool/ace-tool-rs Token if they skipped it during initial installation.
+ * Configure MCP tools after installation
  */
 export async function configMcp(): Promise<void> {
   console.log()
@@ -18,26 +16,57 @@ export async function configMcp(): Promise<void> {
     name: 'action',
     message: '选择操作',
     choices: [
-      { name: `${ansis.green('➜')} 安装/更新 ace-tool MCP ${ansis.gray('(Node.js 实现)')}`, value: 'install-ace-tool' },
-      { name: `${ansis.green('➜')} 安装/更新 ace-tool-rs MCP ${ansis.yellow('(推荐)')} ${ansis.gray('(Rust 实现)')}`, value: 'install-ace-tool-rs' },
-      { name: `${ansis.red('✕')} 卸载 MCP 配置`, value: 'uninstall' },
+      { name: `${ansis.green('➜')} 代码检索 MCP ${ansis.gray('(ContextWeaver / ace-tool)')}`, value: 'code-retrieval' },
+      { name: `${ansis.blue('➜')} 辅助工具 MCP ${ansis.gray('(context7 / Playwright / exa...)')}`, value: 'auxiliary' },
+      { name: `${ansis.red('✕')} 卸载 MCP`, value: 'uninstall' },
       new inquirer.Separator(),
       { name: `${ansis.gray('返回')}`, value: 'cancel' },
     ],
   }])
 
-  if (action === 'cancel') {
+  if (action === 'cancel')
     return
-  }
 
-  if (action === 'uninstall') {
+  if (action === 'code-retrieval') {
+    await handleCodeRetrieval()
+  }
+  else if (action === 'auxiliary') {
+    await handleAuxiliary()
+  }
+  else if (action === 'uninstall') {
     await handleUninstall()
-    return
   }
+}
 
-  // Install/Update ace-tool or ace-tool-rs
-  const isAceToolRs = action === 'install-ace-tool-rs'
-  const toolName = isAceToolRs ? 'ace-tool-rs' : 'ace-tool'
+async function handleCodeRetrieval(): Promise<void> {
+  console.log()
+
+  const { tool } = await inquirer.prompt([{
+    type: 'list',
+    name: 'tool',
+    message: '选择代码检索工具',
+    choices: [
+      { name: `ContextWeaver ${ansis.green('(推荐)')} ${ansis.gray('- 本地混合搜索')}`, value: 'contextweaver' },
+      { name: `ace-tool ${ansis.red('(收费)')} ${ansis.gray('- Node.js')}`, value: 'ace-tool' },
+      { name: `ace-tool-rs ${ansis.red('(收费)')} ${ansis.gray('- Rust')}`, value: 'ace-tool-rs' },
+      new inquirer.Separator(),
+      { name: `${ansis.gray('返回')}`, value: 'cancel' },
+    ],
+  }])
+
+  if (tool === 'cancel')
+    return
+
+  if (tool === 'contextweaver') {
+    await handleInstallContextWeaver()
+  }
+  else {
+    await handleInstallAceTool(tool === 'ace-tool-rs')
+  }
+}
+
+async function handleInstallAceTool(isRs: boolean): Promise<void> {
+  const toolName = isRs ? 'ace-tool-rs' : 'ace-tool'
 
   console.log()
   console.log(ansis.cyan(`📖 获取 ${toolName} 访问方式：`))
@@ -45,75 +74,166 @@ export async function configMcp(): Promise<void> {
   console.log(`   ${ansis.gray('•')} ${ansis.cyan('中转服务')} ${ansis.yellow('(无需注册)')}: ${ansis.underline('https://linux.do/t/topic/1291730')}`)
   console.log()
 
-  const aceAnswers = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'baseUrl',
-      message: `Base URL ${ansis.gray('(使用中转服务时必填，官方服务留空)')}`,
-    },
-    {
-      type: 'password',
-      name: 'token',
-      message: `Token ${ansis.gray('(必填)')}`,
-      validate: (input: string) => input.trim() !== '' || '请输入 Token',
-    },
+  const answers = await inquirer.prompt([
+    { type: 'input', name: 'baseUrl', message: `Base URL ${ansis.gray('(中转服务必填，官方留空)')}` },
+    { type: 'password', name: 'token', message: `Token ${ansis.gray('(必填)')}`, validate: (v: string) => v.trim() !== '' || '请输入 Token' },
   ])
 
   console.log()
   console.log(ansis.yellow(`⏳ 正在配置 ${toolName} MCP...`))
-  console.log()
 
-  const installFn = isAceToolRs ? installAceToolRs : installAceTool
-  const result = await installFn({
-    baseUrl: aceAnswers.baseUrl?.trim() || undefined,
-    token: aceAnswers.token.trim(),
+  const result = await (isRs ? installAceToolRs : installAceTool)({
+    baseUrl: answers.baseUrl?.trim() || undefined,
+    token: answers.token.trim(),
   })
 
+  console.log()
   if (result.success) {
     console.log(ansis.green(`✓ ${toolName} MCP 配置成功！`))
-    if (result.configPath) {
-      console.log(ansis.gray(`  配置文件: ${result.configPath}`))
-    }
-    console.log()
-    console.log(ansis.cyan('💡 提示：'))
-    console.log(ansis.gray('  1. 重启 Claude Code CLI 使配置生效'))
-    console.log(ansis.gray('  2. 运行 /ccg:dev 命令测试 MCP 功能'))
+    console.log(ansis.gray(`  重启 Claude Code CLI 使配置生效`))
   }
   else {
-    console.log(ansis.red(`✗ ${toolName} MCP 配置失败`))
-    console.log(ansis.gray(`  错误信息: ${result.message}`))
+    console.log(ansis.red(`✗ ${toolName} MCP 配置失败: ${result.message}`))
+  }
+}
+
+async function handleInstallContextWeaver(): Promise<void> {
+  console.log()
+  console.log(ansis.cyan(`📖 获取硅基流动 API Key：`))
+  console.log(`   ${ansis.gray('1.')} 访问 ${ansis.underline('https://siliconflow.cn/')} 注册账号`)
+  console.log(`   ${ansis.gray('2.')} 进入控制台 → API 密钥 → 创建密钥`)
+  console.log(`   ${ansis.gray('3.')} 新用户有免费额度，Embedding + Rerank 完全够用`)
+  console.log()
+
+  const { apiKey } = await inquirer.prompt([{
+    type: 'password',
+    name: 'apiKey',
+    message: `硅基流动 API Key ${ansis.gray('(sk-xxx)')}`,
+    mask: '*',
+    validate: (v: string) => v.trim() !== '' || '请输入 API Key',
+  }])
+
+  console.log()
+  console.log(ansis.yellow('⏳ 正在配置 ContextWeaver MCP...'))
+
+  const result = await installContextWeaver({ siliconflowApiKey: apiKey.trim() })
+
+  console.log()
+  if (result.success) {
+    console.log(ansis.green('✓ ContextWeaver MCP 配置成功！'))
+    console.log(ansis.gray('  重启 Claude Code CLI 使配置生效'))
+  }
+  else {
+    console.log(ansis.red(`✗ ContextWeaver MCP 配置失败: ${result.message}`))
+  }
+}
+
+// 辅助工具 MCP 配置
+const AUXILIARY_MCPS = [
+  { id: 'context7', name: 'Context7', desc: '获取最新库文档', command: 'npx', args: ['-y', '@upstash/context7-mcp@latest'] },
+  { id: 'Playwright', name: 'Playwright', desc: '浏览器自动化/测试', command: 'npx', args: ['-y', '@playwright/mcp@latest'] },
+  { id: 'mcp-deepwiki', name: 'DeepWiki', desc: '知识库查询', command: 'npx', args: ['-y', 'mcp-deepwiki@latest'] },
+  { id: 'exa', name: 'Exa', desc: '搜索引擎（需 API Key）', command: 'npx', args: ['-y', 'exa-mcp-server@latest'], requiresApiKey: true, apiKeyEnv: 'EXA_API_KEY' },
+]
+
+async function handleAuxiliary(): Promise<void> {
+  console.log()
+
+  const { selected } = await inquirer.prompt([{
+    type: 'checkbox',
+    name: 'selected',
+    message: '选择要安装的辅助工具（空格选择，回车确认）',
+    choices: AUXILIARY_MCPS.map(m => ({
+      name: `${m.name} ${ansis.gray(`- ${m.desc}`)}`,
+      value: m.id,
+    })),
+  }])
+
+  if (!selected || selected.length === 0) {
+    console.log(ansis.gray('未选择任何工具'))
+    return
   }
 
   console.log()
+
+  for (const id of selected) {
+    const mcp = AUXILIARY_MCPS.find(m => m.id === id)!
+    let env: Record<string, string> = {}
+
+    if (mcp.requiresApiKey) {
+      console.log(ansis.cyan(`📖 获取 ${mcp.name} API Key：`))
+      console.log(`   访问 ${ansis.underline('https://exa.ai/')} 注册获取（有免费额度）`)
+      console.log()
+
+      const { apiKey } = await inquirer.prompt([{
+        type: 'password',
+        name: 'apiKey',
+        message: `${mcp.name} API Key`,
+        mask: '*',
+        validate: (v: string) => v.trim() !== '' || '请输入 API Key',
+      }])
+      env[mcp.apiKeyEnv!] = apiKey.trim()
+    }
+
+    console.log(ansis.yellow(`⏳ 正在安装 ${mcp.name}...`))
+    const result = await installMcpServer(mcp.id, mcp.command, mcp.args, env)
+
+    if (result.success) {
+      console.log(ansis.green(`✓ ${mcp.name} 安装成功`))
+    }
+    else {
+      console.log(ansis.red(`✗ ${mcp.name} 安装失败: ${result.message}`))
+    }
+  }
+
+  console.log()
+  console.log(ansis.gray('重启 Claude Code CLI 使配置生效'))
 }
 
 async function handleUninstall(): Promise<void> {
   console.log()
 
-  const { confirm } = await inquirer.prompt([{
-    type: 'confirm',
-    name: 'confirm',
-    message: '确定要卸载 ace-tool MCP 吗？',
-    default: false,
+  const allMcps = [
+    { name: 'ace-tool', value: 'ace-tool' },
+    { name: 'ContextWeaver', value: 'contextweaver' },
+    ...AUXILIARY_MCPS.map(m => ({ name: m.name, value: m.id })),
+  ]
+
+  const { targets } = await inquirer.prompt([{
+    type: 'checkbox',
+    name: 'targets',
+    message: '选择要卸载的 MCP（空格选择，回车确认）',
+    choices: allMcps,
   }])
 
-  if (!confirm) {
-    console.log(ansis.gray('已取消'))
+  if (!targets || targets.length === 0) {
+    console.log(ansis.gray('未选择任何工具'))
     return
   }
 
   console.log()
-  console.log(ansis.yellow('⏳ 正在卸载 ace-tool MCP...'))
 
-  const result = await uninstallAceTool()
+  for (const target of targets) {
+    console.log(ansis.yellow(`⏳ 正在卸载 ${target}...`))
 
-  if (result.success) {
-    console.log(ansis.green('✓ ace-tool MCP 已卸载'))
-    console.log()
+    let result
+    if (target === 'ace-tool') {
+      result = await uninstallAceTool()
+    }
+    else if (target === 'contextweaver') {
+      result = await uninstallContextWeaver()
+    }
+    else {
+      result = await uninstallMcpServer(target)
+    }
+
+    if (result.success) {
+      console.log(ansis.green(`✓ ${target} 已卸载`))
+    }
+    else {
+      console.log(ansis.red(`✗ ${target} 卸载失败: ${result.message}`))
+    }
   }
-  else {
-    console.log(ansis.red('✗ 卸载失败'))
-    console.log(ansis.gray(`  错误信息: ${result.message}`))
-    console.log()
-  }
+
+  console.log()
 }
