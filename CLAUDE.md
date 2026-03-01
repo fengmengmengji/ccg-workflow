@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-03-01 (v1.7.63)
+**Last Updated**: 2026-03-01 (v1.7.64)
 
 ---
 
@@ -11,7 +11,7 @@
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
 
 ### 2026-03-01 (v1.7.63)
-- 🔄 **适配 OpenSpec 1.2**：更新 `spec-*` 系列支持 Profile 系统、`/opsx:propose`、`/opsx:ff`、`/opsx:verify`
+- 🔄 **适配 OpenSpec 1.2**：`spec-init` 支持 Profile 系统 + 自动检测，`spec-review` 修复过时引用，保持 CCG 封装纯粹性
 
 ### 2026-02-27 (v1.7.62)
 - 🔄 **Gemini 模型升级**：`gemini-3-pro-preview` → `gemini-3.1-pro-preview`（PR #65 by @23q3）

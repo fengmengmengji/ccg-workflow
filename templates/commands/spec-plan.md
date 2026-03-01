@@ -88,7 +88,6 @@ description: '多模型分析 → 消除歧义 → 零决策可执行计划'
      * specs (Requirements + PBT)
      * design (Technical decisions)
      * tasks (Zero-decision implementation plan)
-   - **Fast-Forward Option (v1.2+)**: Use `/opsx:ff` to generate all planning artifacts at once instead of step-by-step with `/opsx:continue`.
    - Ensure all resolved constraints and PBT properties are included in the generated artifacts.
 
 6. **Context Checkpoint**
@@ -106,7 +105,6 @@ A change is ready for implementation only when:
 **Reference**
 - Inspect change: `openspec status --change "<id>" --json`
 - List changes: `openspec list --json`
-- Fast-forward artifacts (v1.2+): `/opsx:ff` — creates all planning artifacts at once
 - Search patterns: `rg -n "INVARIANT:|PROPERTY:" openspec/`
 - Use `AskUserQuestion` for ANY ambiguity—never assume
 <!-- CCG:SPEC:PLAN:END -->

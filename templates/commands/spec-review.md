@@ -117,6 +117,5 @@ Review is complete when:
 - View proposal: `openspec status --change "<id>" --json`
 - Check spec constraints: `rg -n "CONSTRAINT:|MUST|INVARIANT:" openspec/changes/<id>/specs/`
 - View implementation diff: `git diff`
-- Verify implementation (v1.2+): `/opsx:verify` — validates implementation matches artifacts
-- Archive (after passing): `/opsx:archive` or `/ccg:spec-impl` → Step 10
+- Archive (after passing): `/ccg:spec-impl` → Step 10
 <!-- CCG:SPEC:REVIEW:END -->

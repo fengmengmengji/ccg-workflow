@@ -103,7 +103,6 @@ description: '初始化 OpenSpec (OPSX) 环境 + 验证多模型 MCP 工具'
 
 **Reference**
 - OpenSpec (OPSX) CLI: `npx @fission-ai/openspec --help`
-- OPSX Commands (v1.2+): `/opsx:propose` (one-step), `/opsx:explore`, `/opsx:new`, `/opsx:ff`, `/opsx:apply`, `/opsx:verify`, `/opsx:archive`
 - Profile Management: `openspec config profile`
 - CCG Workflow: `npx ccg-workflow`
 - Codex/Gemini MCP: Bundled with codeagent-wrapper

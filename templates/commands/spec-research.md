@@ -27,15 +27,11 @@ description: '需求 → 约束集（并行探索 + OPSX 提案）'
      ```bash
      openspec list --json
      ```
-   - **Option A: One-Step Propose (v1.2+ Recommended)**
-     - Use `/opsx:propose` to generate complete proposal (design + specs + tasks) in one step.
-     - This is faster but less iterative.
-   - **Option B: Step-by-Step (More Control)**
-     - If change doesn't exist, create it:
-       ```bash
-       openspec new change "<brief-descriptive-name>"
-       ```
-     - This scaffolds `openspec/changes/<name>/` with proposal.md.
+   - If change doesn't exist, create it:
+     ```bash
+     openspec new change "<brief-descriptive-name>"
+     ```
+   - This scaffolds `openspec/changes/<name>/` with proposal.md.
    - If change already exists, continue with existing change.
 
 2. **Initial Codebase Assessment**
@@ -99,8 +95,6 @@ description: '需求 → 约束集（并行探索 + OPSX 提案）'
 
 **Reference**
 - OPSX CLI: `openspec status --change "<id>" --json`, `openspec list --json`
-- One-step workflow (v1.2+): `/opsx:propose` — generates complete proposal from requirement
-- Step-by-step workflow: `/opsx:new` → `/opsx:continue` or `/opsx:ff`
 - Check prior research: `ls openspec/changes/*/`
 - Use `AskUserQuestion` for ANY ambiguity—never assume or guess
 <!-- CCG:SPEC:RESEARCH:END -->

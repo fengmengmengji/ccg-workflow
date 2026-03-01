@@ -109,14 +109,12 @@ description: '按规范执行 + 多模型协作 + 归档'
 
 10. **Archive on Completion**
     - When ALL tasks in `tasks.md` are marked `[x]`:
-    - **Verify first (v1.2+)**: Use `/opsx:verify` to validate implementation matches artifacts.
     - The agent will use OpenSpec skills to archive the change.
     - This merges spec deltas to `openspec/specs/` and moves change to archive.
 
 **Reference**
 - Check task status: `openspec status --change "<id>" --json`
 - View active changes: `openspec list --json`
-- Verify before archive (v1.2+): `/opsx:verify`
 - Search existing patterns: `rg -n "function|class" <file>`
 
 **Exit Criteria**

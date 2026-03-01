@@ -7,16 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.64] - 2026-03-01
+
+### 🔄 变更
+
+- **保持 CCG 封装纯粹性**：移除 `spec-*` 模板中的 `/opsx:xxx` 引用，用户只需使用 `/ccg:spec-*` 命令
+- **适配 OpenSpec 1.2**：`spec-init` 支持 Profile 系统 + 自动检测，`spec-review` 修复过时引用
+
+---
+
 ## [1.7.63] - 2026-03-01
 
 ### 🔄 变更
 
-- **适配 OpenSpec 1.2**：更新 `spec-*` 系列命令支持新版 OPSX 工作流
-  - `spec-init`：新增 Profile 系统（`core`/`custom`）+ AI 工具自动检测
-  - `spec-research`：新增 `/opsx:propose` 一步到位选项
-  - `spec-plan`：新增 `/opsx:ff` 快进模式提示
-  - `spec-impl`：新增 `/opsx:verify` 验证步骤
-  - `spec-review`：更新引用（移除过时的 `AGENTS.md`）
+- **适配 OpenSpec 1.2**：更新 `spec-*` 系列命令兼容新版 OPSX
+  - `spec-init`：支持 Profile 系统（`core`/`custom`）+ AI 工具自动检测
+  - `spec-review`：更新引用（移除过时的 `AGENTS.md`，改用 `config.yaml`）
+  - **保持封装**：用户只需使用 `/ccg:spec-*` 命令，无需了解底层 OPSX 命令
 
 ---
 
