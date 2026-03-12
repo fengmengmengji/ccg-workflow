@@ -243,6 +243,7 @@ npx ccg-workflow menu  # Select "Configure MCP"
 
 **Code retrieval** (choose one):
 - **ace-tool** (recommended) — Code search via `search_context`. [Official](https://augmentcode.com/) | [Third-party proxy](https://acemcp.heroman.wtf/)
+- **fast-context** (recommended) — Windsurf Fast Context, AI-powered search without full-repo indexing. Requires Windsurf account
 - **ContextWeaver** (alternative) — Local hybrid search, requires SiliconFlow API Key (free)
 
 **Optional tools**:
@@ -353,4 +354,4 @@ MIT
 
 ---
 
-v1.7.81 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)
+v1.7.82 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)

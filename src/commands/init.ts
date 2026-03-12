@@ -7,7 +7,7 @@ import { homedir } from 'node:os'
 import { join } from 'pathe'
 import { i18n, initI18n } from '../i18n'
 import { createDefaultConfig, ensureCcgDir, getCcgDir, readCcgConfig, writeCcgConfig } from '../utils/config'
-import { getAllCommandIds, installAceTool, installAceToolRs, installContextWeaver, installMcpServer, installWorkflows, syncMcpToCodex } from '../utils/installer'
+import { getAllCommandIds, installAceTool, installAceToolRs, installContextWeaver, installFastContext, installMcpServer, installWorkflows, syncMcpToCodex, syncMcpToGemini, writeFastContextPrompt } from '../utils/installer'
 import { isWindows } from '../utils/platform'
 import { migrateToV1_4_0, needsMigration } from '../utils/migration'
 
@@ -248,6 +248,8 @@ export async function init(options: InitOptions = {}): Promise<void> {
   let aceToolBaseUrl = ''
   let aceToolToken = ''
   let contextWeaverApiKey = ''
+  let fastContextApiKey = ''
+  let fastContextIncludeSnippets = false
 
   // Skip MCP configuration if --skip-mcp is passed (used during update)
   if (options.skipMcp) {
@@ -264,11 +266,15 @@ export async function init(options: InitOptions = {}): Promise<void> {
       message: i18n.t('init:mcp.selectProvider'),
       choices: [
         {
-          name: `ace-tool ${ansis.green(`(${i18n.t('common:info')})`)} ${ansis.gray('- search_context (enhance_prompt N/A)')}`,
+          name: `fast-context ${ansis.green(`(${i18n.t('common:info')})`)} ${ansis.gray('- Windsurf Fast Context, AI 驱动搜索')}`,
+          value: 'fast-context',
+        },
+        {
+          name: `ace-tool ${ansis.gray('- search_context (enhance_prompt N/A)')}`,
           value: 'ace-tool',
         },
         {
-          name: `ace-tool-rs ${ansis.green(`(${i18n.t('common:info')})`)} ${ansis.gray('(Rust) - search_context')}`,
+          name: `ace-tool-rs ${ansis.gray('(Rust) - search_context')}`,
           value: 'ace-tool-rs',
         },
         {
@@ -280,7 +286,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
           value: 'skip',
         },
       ],
-      default: 'ace-tool',
+      default: 'fast-context',
     }])
 
     mcpProvider = selectedMcp
@@ -336,6 +342,52 @@ export async function init(options: InitOptions = {}): Promise<void> {
         console.log(ansis.yellow(`  ℹ️  ${i18n.t('init:mcp.tokenSkipped')}`))
         console.log(ansis.gray(`     • ${toolName} MCP ${i18n.t('init:mcp.notInstalled')}`))
         console.log(ansis.gray(`     • ${i18n.t('init:mcp.configLater', { cmd: ansis.cyan('npx ccg config mcp') })}`))
+        console.log()
+      }
+    }
+    // Configure Fast Context if selected
+    else if (selectedMcp === 'fast-context') {
+      console.log()
+      console.log(ansis.cyan.bold(`  🔧 Fast Context MCP`))
+      console.log(ansis.gray(`     Windsurf Fast Context — AI 驱动代码搜索，无需全量索引`))
+      console.log()
+
+      const { skipKey } = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'skipKey',
+        message: '跳过 API Key 配置？（本地装了 Windsurf 并登录可自动提取）',
+        default: false,
+      }])
+
+      if (!skipKey) {
+        console.log()
+        console.log(ansis.cyan(`     📖 获取 WINDSURF_API_KEY：`))
+        console.log()
+        console.log(`     ${ansis.gray('•')} 安装 Windsurf 编辑器 → 登录 → Key 自动存入本地 SQLite`)
+        console.log(`     ${ansis.gray('•')} 也可手动从 SQLite 提取（AI 可调用 extract_windsurf_key 工具）`)
+        console.log()
+
+        const fcAnswers = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'apiKey',
+            message: `WINDSURF_API_KEY ${ansis.gray('(留空则启动时自动提取)')}`,
+            default: '',
+          },
+          {
+            type: 'confirm',
+            name: 'includeSnippets',
+            message: `返回完整代码片段？${ansis.gray('(否则仅路径+行号，更省 token)')}`,
+            default: false,
+          },
+        ])
+        fastContextApiKey = fcAnswers.apiKey?.trim() || ''
+        fastContextIncludeSnippets = fcAnswers.includeSnippets
+      }
+      else {
+        console.log()
+        console.log(ansis.yellow(`  ℹ️  API Key 已跳过`))
+        console.log(ansis.gray(`     • fast-context MCP 将不带 Key 安装（启动时自动从本地 Windsurf 提取）`))
         console.log()
       }
     }
@@ -520,7 +572,13 @@ export async function init(options: InitOptions = {}): Promise<void> {
   console.log()
   console.log(`  ${ansis.cyan(i18n.t('init:summary.modelRouting'))}  ${ansis.green('Gemini')} (Frontend) + ${ansis.blue('Codex')} (Backend)`)
   console.log(`  ${ansis.cyan(i18n.t('init:summary.commandCount'))}  ${ansis.yellow(selectedWorkflows.length.toString())}`)
-  console.log(`  ${ansis.cyan(i18n.t('init:summary.mcpTool'))}  ${(mcpProvider === 'ace-tool' || mcpProvider === 'ace-tool-rs') ? (aceToolToken ? ansis.green(mcpProvider) : ansis.yellow(`${mcpProvider} (${i18n.t('init:summary.pendingConfig')})`)) : mcpProvider === 'contextweaver' ? (contextWeaverApiKey ? ansis.green('contextweaver') : ansis.yellow(`contextweaver (${i18n.t('init:summary.pendingConfig')})`)) : ansis.gray(i18n.t('init:summary.skipped'))}`)
+  const mcpSummary = (() => {
+    if (mcpProvider === 'fast-context') return ansis.green('fast-context')
+    if (mcpProvider === 'ace-tool' || mcpProvider === 'ace-tool-rs') return aceToolToken ? ansis.green(mcpProvider) : ansis.yellow(`${mcpProvider} (${i18n.t('init:summary.pendingConfig')})`)
+    if (mcpProvider === 'contextweaver') return contextWeaverApiKey ? ansis.green('contextweaver') : ansis.yellow(`contextweaver (${i18n.t('init:summary.pendingConfig')})`)
+    return ansis.gray(i18n.t('init:summary.skipped'))
+  })()
+  console.log(`  ${ansis.cyan(i18n.t('init:summary.mcpTool'))}  ${mcpSummary}`)
   console.log(`  ${ansis.cyan(i18n.t('init:summary.webUI'))}    ${liteMode ? ansis.gray(i18n.t('init:summary.disabled')) : ansis.green(i18n.t('init:summary.enabled'))}`)
   if (wantGrokSearch) {
     console.log(`  ${ansis.cyan('grok-search')}    ${tavilyKey ? ansis.green('✓') : ansis.yellow(`(${i18n.t('init:summary.pendingConfig')})`)}`)
@@ -619,6 +677,26 @@ export async function init(options: InitOptions = {}): Promise<void> {
       else {
         spinner.warn(ansis.yellow(mcpProvider === 'ace-tool-rs' ? i18n.t('init:aceToolRs.failed') : i18n.t('init:aceTool.failed')))
         console.log(ansis.gray(`      ${aceResult.message}`))
+      }
+    }
+    // Install Fast Context MCP if selected
+    else if (mcpProvider === 'fast-context') {
+      spinner.text = 'Configuring fast-context MCP...'
+      const fcResult = await installFastContext({
+        apiKey: fastContextApiKey || undefined,
+        includeSnippets: fastContextIncludeSnippets,
+      })
+      if (fcResult.success) {
+        spinner.succeed(ansis.green(i18n.t('init:installSuccess')))
+        console.log()
+        console.log(`    ${ansis.green('✓')} fast-context MCP ${ansis.gray(`→ ${fcResult.configPath}`)}`)
+        // Write search guidance to Claude Code rules + Codex global instructions
+        await writeFastContextPrompt()
+        console.log(`    ${ansis.green('✓')} 搜索提示词 ${ansis.gray('→ ~/.claude/rules/ + ~/.codex/AGENTS.md + ~/.gemini/GEMINI.md')}`)
+      }
+      else {
+        spinner.warn(ansis.yellow('fast-context MCP 配置失败'))
+        console.log(ansis.gray(`      ${fcResult.message}`))
       }
     }
     // Install ContextWeaver MCP if API key was provided
@@ -762,6 +840,20 @@ export async function init(options: InitOptions = {}): Promise<void> {
         console.log()
         console.log(`    ${ansis.yellow('⚠')} Codex MCP sync failed`)
         console.log(ansis.gray(`      ${codexSyncResult.message}`))
+      }
+
+      // ═══════════════════════════════════════════════════════
+      // Sync MCP servers to Gemini (~/.gemini/settings.json)
+      // ═══════════════════════════════════════════════════════
+      const geminiSyncResult = await syncMcpToGemini()
+      if (geminiSyncResult.success && geminiSyncResult.synced.length > 0) {
+        console.log()
+        console.log(`    ${ansis.green('✓')} Gemini MCP sync: ${geminiSyncResult.synced.join(', ')} ${ansis.gray('→ ~/.gemini/settings.json')}`)
+      }
+      else if (!geminiSyncResult.success) {
+        console.log()
+        console.log(`    ${ansis.yellow('⚠')} Gemini MCP sync failed`)
+        console.log(ansis.gray(`      ${geminiSyncResult.message}`))
       }
     }
 
@@ -941,13 +1033,16 @@ export async function init(options: InitOptions = {}): Promise<void> {
       console.log()
       console.log(ansis.gray(`     ${i18n.t('init:mcp.mcpOptionsHint')}`))
       console.log()
-      console.log(`     ${ansis.green('1.')} ${ansis.cyan('ace-tool / ace-tool-rs')}: ${ansis.underline('https://augmentcode.com/')}`)
+      console.log(`     ${ansis.green('1.')} ${ansis.cyan('fast-context')} ${ansis.yellow('(推荐)')}: Windsurf Fast Context`)
+      console.log(`        ${ansis.gray('AI 驱动代码搜索，需 Windsurf 账号，免费/低成本')}`)
+      console.log()
+      console.log(`     ${ansis.green('2.')} ${ansis.cyan('ace-tool / ace-tool-rs')}: ${ansis.underline('https://augmentcode.com/')}`)
       console.log(`        ${ansis.gray(i18n.t('init:mcp.promptEnhancement'))}`)
       console.log()
-      console.log(`     ${ansis.green('2.')} ${ansis.cyan('ace-tool ' + i18n.t('init:mcp.proxyService'))} ${ansis.yellow(`(${i18n.t('init:mcp.noSignup')})`)}: ${ansis.underline('https://acemcp.heroman.wtf/')}`)
+      console.log(`     ${ansis.green('3.')} ${ansis.cyan('ace-tool ' + i18n.t('init:mcp.proxyService'))} ${ansis.yellow(`(${i18n.t('init:mcp.noSignup')})`)}: ${ansis.underline('https://acemcp.heroman.wtf/')}`)
       console.log(`        ${ansis.gray(i18n.t('init:mcp.communityProxy'))}`)
       console.log()
-      console.log(`     ${ansis.green('3.')} ${ansis.cyan('ContextWeaver')} ${ansis.yellow(`(${i18n.t('init:mcp.freeQuota')})`)}: ${ansis.underline('https://siliconflow.cn/')}`)
+      console.log(`     ${ansis.green('4.')} ${ansis.cyan('ContextWeaver')} ${ansis.yellow(`(${i18n.t('init:mcp.freeQuota')})`)}: ${ansis.underline('https://siliconflow.cn/')}`)
       console.log(`        ${ansis.gray(i18n.t('init:mcp.localEngine'))}`)
       console.log()
     }

@@ -4,7 +4,7 @@ import { i18n } from '../i18n'
 import fs from 'fs-extra'
 import { homedir } from 'node:os'
 import { join } from 'pathe'
-import { installAceTool, installAceToolRs, installContextWeaver, installMcpServer, uninstallAceTool, uninstallContextWeaver, uninstallMcpServer } from '../utils/installer'
+import { installAceTool, installAceToolRs, installContextWeaver, installFastContext, installMcpServer, removeFastContextPrompt, uninstallAceTool, uninstallContextWeaver, uninstallFastContext, uninstallMcpServer, writeFastContextPrompt } from '../utils/installer'
 
 /**
  * Configure MCP tools after installation
@@ -19,7 +19,7 @@ export async function configMcp(): Promise<void> {
     name: 'action',
     message: '选择操作',
     choices: [
-      { name: `${ansis.green('➜')} 代码检索 MCP ${ansis.gray('(ace-tool / ContextWeaver)')}`, value: 'code-retrieval' },
+      { name: `${ansis.green('➜')} 代码检索 MCP ${ansis.gray('(ace-tool / fast-context / ContextWeaver)')}`, value: 'code-retrieval' },
       { name: `${ansis.green('➜')} 联网搜索 MCP ${ansis.gray('(grok-search，比内置联网更好用)')}`, value: 'grok-search' },
       { name: `${ansis.blue('➜')} 辅助工具 MCP ${ansis.gray('(context7 / Playwright / exa...)')}`, value: 'auxiliary' },
       { name: `${ansis.red('✕')} 卸载 MCP`, value: 'uninstall' },
@@ -55,6 +55,7 @@ async function handleCodeRetrieval(): Promise<void> {
     choices: [
       { name: `ace-tool ${ansis.green('(推荐)')} ${ansis.gray('- 代码检索（enhance_prompt 已不可用）')}`, value: 'ace-tool' },
       { name: `ace-tool-rs ${ansis.green('(推荐)')} ${ansis.gray('- Rust 版本')}`, value: 'ace-tool-rs' },
+      { name: `fast-context ${ansis.green('(推荐)')} ${ansis.gray('- Windsurf Fast Context（免费/低成本）')}`, value: 'fast-context' },
       { name: `ContextWeaver ${ansis.gray('- 本地混合搜索（需硅基流动 API Key）')}`, value: 'contextweaver' },
       new inquirer.Separator(),
       { name: `${ansis.gray('返回')}`, value: 'cancel' },
@@ -66,6 +67,9 @@ async function handleCodeRetrieval(): Promise<void> {
 
   if (tool === 'contextweaver') {
     await handleInstallContextWeaver()
+  }
+  else if (tool === 'fast-context') {
+    await handleInstallFastContext()
   }
   else {
     await handleInstallAceTool(tool === 'ace-tool-rs')
@@ -133,6 +137,46 @@ async function handleInstallContextWeaver(): Promise<void> {
   }
   else {
     console.log(ansis.red(`✗ ContextWeaver MCP 配置失败: ${result.message}`))
+  }
+}
+
+async function handleInstallFastContext(): Promise<void> {
+  console.log()
+  console.log(ansis.cyan('📖 Fast Context (Windsurf Fast Context)：'))
+  console.log(`   ${ansis.gray('•')} 需要 Windsurf 账号的 API Key`)
+  console.log(`   ${ansis.gray('•')} 本地装过 Windsurf 并登录 → Key 可自动提取，也可手动填入`)
+  console.log(`   ${ansis.gray('•')} Key 获取：安装 Windsurf → 登录 → 从本地 SQLite 提取 apiKey`)
+  console.log(`   ${ansis.gray('•')} 轻量模式返回文件路径+行范围，完整模式额外返回代码片段`)
+  console.log()
+
+  const answers = await inquirer.prompt([
+    { type: 'input', name: 'apiKey', message: `WINDSURF_API_KEY ${ansis.gray('(本地装了 Windsurf 可留空自动提取)')}` },
+    {
+      type: 'confirm',
+      name: 'includeSnippets',
+      message: `返回完整代码片段？${ansis.gray('(FC_INCLUDE_SNIPPETS，输出 ~40KB，否则仅路径+行号 ~2KB)')}`,
+      default: false,
+    },
+  ])
+
+  console.log()
+  console.log(ansis.yellow('⏳ 正在配置 fast-context MCP...'))
+
+  const result = await installFastContext({
+    apiKey: answers.apiKey?.trim() || undefined,
+    includeSnippets: answers.includeSnippets,
+  })
+
+  console.log()
+  if (result.success) {
+    // Write search guidance to Claude Code rules + Codex global instructions
+    await writeFastContextPrompt()
+    console.log(ansis.green('✓ fast-context MCP 配置成功！'))
+    console.log(ansis.green('✓ 搜索提示词已写入 ~/.claude/rules/ + ~/.codex/AGENTS.md + ~/.gemini/GEMINI.md'))
+    console.log(ansis.gray('  重启 Claude Code CLI 使配置生效'))
+  }
+  else {
+    console.log(ansis.red(`✗ fast-context MCP 配置失败: ${result.message}`))
   }
 }
 
@@ -313,6 +357,7 @@ async function handleUninstall(): Promise<void> {
 
   const allMcps = [
     { name: 'ace-tool', value: 'ace-tool' },
+    { name: 'fast-context', value: 'fast-context' },
     { name: 'ContextWeaver', value: 'contextweaver' },
     { name: 'grok-search', value: 'grok-search' },
     ...AUXILIARY_MCPS.map(m => ({ name: m.name, value: m.id })),
@@ -338,6 +383,11 @@ async function handleUninstall(): Promise<void> {
     let result
     if (target === 'ace-tool') {
       result = await uninstallAceTool()
+    }
+    else if (target === 'fast-context') {
+      result = await uninstallFastContext()
+      // Also remove search guidance prompts
+      await removeFastContextPrompt()
     }
     else if (target === 'contextweaver') {
       result = await uninstallContextWeaver()

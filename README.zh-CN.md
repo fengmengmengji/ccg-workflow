@@ -241,8 +241,9 @@ npx ccg-workflow menu  # 选择「安装 Claude Code」
 npx ccg-workflow menu  # 选择「配置 MCP」
 ```
 
-**代码检索**（二选一）：
+**代码检索**（多选一）：
 - **ace-tool**（推荐）— 代码检索 `search_context` 可用。[官方](https://augmentcode.com/) | [第三方中转](https://acemcp.heroman.wtf/)
+- **fast-context**（推荐）— Windsurf Fast Context，AI 驱动搜索，无需全量索引。需 Windsurf 账号
 - **ContextWeaver**（备选）— 本地混合搜索，需要硅基流动 API Key（免费）
 
 **辅助工具**（可选）：
@@ -353,4 +354,4 @@ MIT
 
 ---
 
-v1.7.81 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [参与贡献](./CONTRIBUTING.md)
+v1.7.82 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [参与贡献](./CONTRIBUTING.md)

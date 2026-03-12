@@ -100,5 +100,11 @@ export interface AceToolConfig {
   token: string
 }
 
+// fast-context (Windsurf Fast Context) 配置
+export interface FastContextConfig {
+  apiKey?: string // WINDSURF_API_KEY (本地装 Windsurf 登录后可自动提取)
+  includeSnippets?: boolean // FC_INCLUDE_SNIPPETS — true 返回完整代码片段
+}
+
 // Re-export CLI types
 export * from './cli'

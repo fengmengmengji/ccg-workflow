@@ -2,13 +2,18 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-03-11 (v1.7.81)
+**Last Updated**: 2026-03-12 (v1.7.82)
 
 ---
 
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-03-12 (v1.7.82)
+- ✨ **fast-context MCP 集成**：Windsurf Fast Context 作为第四个代码检索选项（推荐），支持 API Key 可选 + FC_INCLUDE_SNIPPETS
+- ✨ **三端搜索提示词**：自动注入 Claude Code rules + Codex AGENTS.md + Gemini GEMINI.md，卸载自动清理
+- ✨ **Gemini MCP 同步**：`syncMcpToGemini()` 镜像 MCP 到 `~/.gemini/settings.json`
 
 ### 2026-03-11 (v1.7.81)
 - 🔄 **`/ccg:commit` Context 自动归档**：从 git diff 自动生成 ContextEntry，不再依赖手动 session.log
@@ -110,7 +115,7 @@
 3. **13 个专家提示词**：Codex 6 个 + Gemini 7 个
 4. **6 个原生 Skills**：质量关卡（verify-security/quality/change/module + gen-docs）+ 多 Agent 协同
 5. **跨平台 CLI 工具**：一键安装（支持 macOS、Linux、Windows）
-6. **MCP 集成**：ace-tool（推荐）/ ContextWeaver + context7（自动安装）+ Codex MCP 同步
+6. **MCP 集成**：fast-context（推荐）/ ace-tool / ContextWeaver + context7（自动安装）+ Codex & Gemini MCP 同步
 7. **Agent Teams 并行实施**：Team 系列 4 个独立命令，spawn Builder teammates 并行写代码
 
 ---

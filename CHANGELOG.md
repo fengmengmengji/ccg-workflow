@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.82] - 2026-03-12
+
+### ✨ 新功能
+
+- **fast-context MCP 集成**：新增 Windsurf Fast Context 作为第四个代码检索 MCP 选项，与 ace-tool / ace-tool-rs / ContextWeaver 并列
+  - 初始化时 fast-context 为默认推荐选项
+  - 支持 API Key 可选（本地装 Windsurf 自动提取）+ FC_INCLUDE_SNIPPETS 模式选择
+  - 安装/卸载/菜单配置完整支持
+- **三端搜索提示词注入**：选择 fast-context 时自动写入搜索指南到 Claude Code (`~/.claude/rules/`)、Codex (`~/.codex/AGENTS.md`)、Gemini (`~/.gemini/GEMINI.md`)，卸载时自动清理
+- **Gemini MCP 同步**：新增 `syncMcpToGemini()` 将 CCG 管理的 MCP 服务器镜像到 `~/.gemini/settings.json`，与 Codex 同步机制对齐
+
+---
+
 ## [1.7.81] - 2026-03-11
 
 ### 🔄 变更
