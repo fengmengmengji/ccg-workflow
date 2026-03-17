@@ -79,6 +79,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          packageManager: npm
           command: |
             r2 object put github/preset/codeagent-wrapper-darwin-amd64 --file=artifacts/codeagent-wrapper-darwin-amd64 --content-type=application/octet-stream --remote &&
             r2 object put github/preset/codeagent-wrapper-darwin-arm64 --file=artifacts/codeagent-wrapper-darwin-arm64 --content-type=application/octet-stream --remote &&
