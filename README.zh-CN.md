@@ -319,7 +319,7 @@ npm uninstall -g ccg-workflow  # npm 全局用户需额外执行
 
 ## 贡献者
 
-<!-- readme: contributors,claude/-,bots/- -start -->
+<!-- readme: contributors -start -->
 <table>
 <tr>
     <td align="center"><a href="https://github.com/fengshao1227"><img src="https://avatars.githubusercontent.com/fengshao1227?v=4&s=100" width="100;" alt="fengshao1227"/><br /><sub><b>fengshao1227</b></sub></a></td>
@@ -329,7 +329,7 @@ npm uninstall -g ccg-workflow  # npm 全局用户需额外执行
     <td align="center"><a href="https://github.com/GGzili"><img src="https://avatars.githubusercontent.com/GGzili?v=4&s=100" width="100;" alt="GGzili"/><br /><sub><b>GGzili</b></sub></a></td>
 </tr>
 </table>
-<!-- readme: contributors,claude/-,bots/- -end -->
+<!-- readme: contributors -end -->
 
 ## 致谢
 
