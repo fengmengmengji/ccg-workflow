@@ -82,47 +82,66 @@ interface InstallContext {
 const GITHUB_REPO = 'fengshao1227/ccg-workflow'
 const RELEASE_TAG = 'preset'
 
-/** Download sources: R2 first (China-friendly) → GitHub fallback (global) */
+/** Download sources: R2 CDN first (China-friendly) → GitHub fallback (global) */
 const BINARY_SOURCES = [
-  { name: 'Cloudflare R2', url: 'https://pub-29270440a0854a49bf1589cd3662c067.r2.dev/preset', timeoutMs: 15_000 },
-  { name: 'GitHub Release', url: `https://github.com/${GITHUB_REPO}/releases/download/${RELEASE_TAG}`, timeoutMs: 60_000 },
+  { name: 'Cloudflare CDN', url: 'https://github.20031227.xyz/preset', timeoutMs: 30_000 },
+  { name: 'GitHub Release', url: `https://github.com/${GITHUB_REPO}/releases/download/${RELEASE_TAG}`, timeoutMs: 120_000 },
 ]
 
 /**
  * Download binary from a single URL with retry.
- * Returns true on success, false on failure.
+ * Uses curl for proxy support (reads HTTPS_PROXY / ALL_PROXY env vars automatically).
+ * Falls back to Node.js fetch if curl is unavailable.
  */
 async function downloadFromUrl(url: string, destPath: string, timeoutMs: number, maxAttempts = 2): Promise<boolean> {
+  const timeoutSec = Math.ceil(timeoutMs / 1000)
+
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const controller = new AbortController()
-      const timer = setTimeout(() => controller.abort(), timeoutMs)
+      // Prefer curl — auto-reads HTTPS_PROXY / ALL_PROXY for proxy support
+      const { execSync } = await import('node:child_process')
+      execSync(
+        `curl -fsSL --max-time ${timeoutSec} -o "${destPath}" "${url}"`,
+        { stdio: 'pipe', timeout: timeoutMs + 5000 },
+      )
 
-      const response = await fetch(url, { redirect: 'follow', signal: controller.signal })
-      if (!response.ok) {
-        clearTimeout(timer)
-        if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, attempt * 2000))
-          continue
-        }
-        return false
-      }
-
-      const buffer = Buffer.from(await response.arrayBuffer())
-      clearTimeout(timer)
-
-      await fs.writeFile(destPath, buffer)
       if (process.platform !== 'win32') {
         await fs.chmod(destPath, 0o755)
       }
       return true
     }
     catch {
-      if (attempt < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, attempt * 2000))
-        continue
+      // curl failed — try Node.js fetch as fallback (no proxy support)
+      try {
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+        const response = await fetch(url, { redirect: 'follow', signal: controller.signal })
+        if (!response.ok) {
+          clearTimeout(timer)
+          if (attempt < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, attempt * 2000))
+            continue
+          }
+          return false
+        }
+
+        const buffer = Buffer.from(await response.arrayBuffer())
+        clearTimeout(timer)
+
+        await fs.writeFile(destPath, buffer)
+        if (process.platform !== 'win32') {
+          await fs.chmod(destPath, 0o755)
+        }
+        return true
       }
-      return false
+      catch {
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, attempt * 2000))
+          continue
+        }
+        return false
+      }
     }
   }
   return false
@@ -130,7 +149,7 @@ async function downloadFromUrl(url: string, destPath: string, timeoutMs: number,
 
 /**
  * Download codeagent-wrapper binary with dual-source fallback.
- * Strategy: GitHub (8s timeout) → R2 mirror (60s timeout).
+ * Strategy: R2 mirror (60s) → GitHub Release (120s). Uses curl for proxy support.
  */
 async function downloadBinaryFromRelease(binaryName: string, destPath: string): Promise<boolean> {
   for (const source of BINARY_SOURCES) {
@@ -206,8 +225,9 @@ async function installCommandFiles(ctx: InstallContext, workflowIds: string[]): 
             content = injectConfigVariables(content, ctx.config)
             content = replaceHomePathsInTemplate(content, ctx.installDir)
             await fs.writeFile(destFile, content, 'utf-8')
-            ctx.result.installedCommands.push(cmd)
           }
+          // Count as installed whether written or already existing
+          ctx.result.installedCommands.push(cmd)
         }
         else {
           const placeholder = `---
