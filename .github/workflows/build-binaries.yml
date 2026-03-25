@@ -85,5 +85,5 @@ jobs:
           for bin in artifacts/codeagent-wrapper-*; do
             name=$(basename "$bin")
             echo "Uploading $name → R2..."
-            wrangler r2 object put "github/preset/$name" --file="$bin" --content-type=application/octet-stream
+            wrangler r2 object put "github/preset/$name" --file="$bin" --content-type=application/octet-stream --remote
           done
