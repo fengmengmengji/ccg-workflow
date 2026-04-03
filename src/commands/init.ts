@@ -247,11 +247,25 @@ export async function init(options: InitOptions = {}): Promise<void> {
       choices: [
         { name: `${ansis.green('●')} ${i18n.t('init:api.officialOption')}`, value: 'official' },
         { name: `${ansis.cyan('●')} ${i18n.t('init:api.thirdPartyOption')}`, value: 'thirdparty' },
-        { name: ansis.gray(`○ ${i18n.t('init:api.sponsorSlot')}`), value: 'sponsor', disabled: i18n.t('init:api.sponsorDisabled') },
+        { name: `${ansis.yellow('★')} ${i18n.t('init:api.sponsor302AI')} ${ansis.gray('— https://share.302.ai/oUDqQ6')}`, value: '302ai' },
       ],
     }])
 
-    if (apiProvider === 'thirdparty') {
+    if (apiProvider === '302ai') {
+      apiUrl = 'https://api.302.ai/cc'
+      console.log()
+      console.log(`    ${ansis.yellow('★')} ${i18n.t('init:api.sponsor302AIGetKey')}: ${ansis.cyan.underline('https://share.302.ai/oUDqQ6')}`)
+      console.log()
+      const { key } = await inquirer.prompt([{
+        type: 'password',
+        name: 'key',
+        message: `302.AI API Key ${ansis.gray(`(${i18n.t('init:api.keyRequired')})`)}`,
+        mask: '*',
+        validate: (v: string) => v.trim() !== '' || i18n.t('init:api.enterKey'),
+      }])
+      apiKey = key?.trim() || ''
+    }
+    else if (apiProvider === 'thirdparty') {
       const apiAnswers = await inquirer.prompt([
         {
           type: 'input',

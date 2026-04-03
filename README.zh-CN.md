@@ -14,6 +14,14 @@
 
 </div>
 
+## ♥️ 赞助商
+
+[![302.AI](assets/sponsors/302.ai.jpg)](https://share.302.ai/oUDqQ6)
+
+[302.AI](https://share.302.ai/oUDqQ6) 是一个按用量付费的企业级 AI 资源平台，提供市场上最新、最全面的 AI 模型和 API，以及多种开箱即用的在线 AI 应用。
+
+---
+
 Claude Code 编排 Codex + Gemini 的多模型协作开发系统。前端任务路由至 Gemini，后端任务路由至 Codex，Claude 负责编排决策和代码审核。
 
 ## 为什么选择 CCG？

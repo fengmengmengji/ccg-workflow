@@ -346,7 +346,7 @@ async function configApi(): Promise<void> {
     choices: [
       { name: `${ansis.green('●')} ${i18n.t('menu:api.officialOption')}`, value: 'official' },
       { name: `${ansis.cyan('●')} ${i18n.t('menu:api.thirdPartyOption')}`, value: 'thirdparty' },
-      { name: ansis.gray(`○ ${i18n.t('menu:api.sponsorSlot')}`), value: 'sponsor', disabled: i18n.t('menu:api.sponsorDisabled') },
+      { name: `${ansis.yellow('★')} ${i18n.t('menu:api.sponsor302AI')} ${ansis.gray('— https://share.302.ai/oUDqQ6')}`, value: '302ai' },
     ],
   }])
 
@@ -356,6 +356,24 @@ async function configApi(): Promise<void> {
       settings.env = {}
     delete settings.env.ANTHROPIC_BASE_URL
     delete settings.env.ANTHROPIC_AUTH_TOKEN
+    delete settings.env.ANTHROPIC_API_KEY
+  }
+  else if (apiProvider === '302ai') {
+    console.log()
+    console.log(`    ${ansis.yellow('★')} ${i18n.t('menu:api.sponsor302AIGetKey')}: ${ansis.cyan.underline('https://share.302.ai/oUDqQ6')}`)
+    console.log()
+    const { key } = await inquirer.prompt([{
+      type: 'password',
+      name: 'key',
+      message: `302.AI API Key ${ansis.gray(`(${i18n.t('menu:api.keyRequired')})`)}`,
+      mask: '*',
+      validate: (v: string) => v.trim() !== '' || i18n.t('menu:api.enterKey'),
+    }])
+
+    if (!settings.env)
+      settings.env = {}
+    settings.env.ANTHROPIC_BASE_URL = 'https://api.302.ai/cc'
+    settings.env.ANTHROPIC_AUTH_TOKEN = key.trim()
     delete settings.env.ANTHROPIC_API_KEY
   }
   else {
