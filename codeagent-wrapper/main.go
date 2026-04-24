@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	version               = "5.10.0"
+	version               = "5.10.0" // CI test trigger — no functional change
 	defaultWorkdir        = "."
 	defaultTimeout        = 7200 // seconds (2 hours)
 	defaultCoverageTarget = 90.0
