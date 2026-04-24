@@ -373,6 +373,7 @@ Looking for a place to start? Check out issues labeled [`good first issue`](http
 - **Email**: [fengshao1227@gmail.com](mailto:fengshao1227@gmail.com) — Sponsorship, collaboration, or development ideas
 - **Issues**: [GitHub Issues](https://github.com/fengshao1227/ccg-workflow/issues) — Bug reports and feature requests
 - **Discussions**: [GitHub Discussions](https://github.com/fengshao1227/ccg-workflow/discussions) — Questions and community chat
+- **Community**: [Linux.do](https://linux.do) — Open-source tech community
 
 ## License
 

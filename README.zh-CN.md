@@ -370,6 +370,7 @@ npm uninstall -g ccg-workflow  # npm 全局用户需额外执行
 - **邮箱**: [fengshao1227@gmail.com](mailto:fengshao1227@gmail.com) — 赞助、合作洽谈、开发交流
 - **Issues**: [GitHub Issues](https://github.com/fengshao1227/ccg-workflow/issues) — Bug 反馈与功能建议
 - **讨论区**: [GitHub Discussions](https://github.com/fengshao1227/ccg-workflow/discussions) — 问题咨询与社区交流
+- **社区**: [Linux.do](https://linux.do) — 开源技术社区
 
 ## License
 
